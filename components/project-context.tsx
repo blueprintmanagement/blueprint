@@ -1,0 +1,245 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  CatalogItem,
+  Expense,
+  Supplier,
+  expenses as initialExpenses,
+  catalogItems as initialCatalogItems,
+  suppliers as initialSuppliers,
+  projects as initialProjects,
+  Project,
+} from "@/lib/mock-data";
+
+type ProjectContextValue = {
+  activeProject: Project;
+  activeProjectId: string;
+  projects: Project[];
+  expenses: Expense[];
+  projectExpenses: Expense[];
+  catalogItems: CatalogItem[];
+  suppliers: Supplier[];
+  addProject: (project: Project) => void;
+  deleteProject: (projectId: string) => void;
+  addExpense: (expense: Expense) => void;
+  updateExpense: (expenseId: string, patch: Partial<Expense>) => void;
+  addCatalogItem: (item: CatalogItem) => void;
+  addSupplier: (supplier: Supplier) => void;
+  updateSupplier: (supplierId: string, patch: Partial<Supplier>) => void;
+  setActiveProjectId: (projectId: string) => void;
+};
+
+const ProjectContext = createContext<ProjectContextValue | null>(null);
+
+export function ProjectProvider({ children }: { children: React.ReactNode }) {
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [activeProjectId, setActiveProjectIdState] = useState(initialProjects[0].id);
+  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>(initialCatalogItems);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+
+  useEffect(() => {
+    const savedProject = window.localStorage.getItem("blueprint.activeProjectId");
+    const savedProjects = window.localStorage.getItem("blueprint.projects");
+    const savedExpenses = window.localStorage.getItem("blueprint.expenses");
+    const savedCatalogItems = window.localStorage.getItem("blueprint.catalogItems");
+    const savedSuppliers = window.localStorage.getItem("blueprint.suppliers");
+
+    let hydratedProjects = initialProjects;
+
+    if (savedProjects) {
+      try {
+        hydratedProjects = JSON.parse(savedProjects) as Project[];
+        setProjects(hydratedProjects.length ? hydratedProjects : initialProjects);
+      } catch {
+        hydratedProjects = initialProjects;
+        setProjects(initialProjects);
+      }
+    }
+
+    if (savedProject && hydratedProjects.some((project) => project.id === savedProject)) {
+      setActiveProjectIdState(savedProject);
+    }
+
+    if (savedExpenses) {
+      try {
+        setExpenses(JSON.parse(savedExpenses) as Expense[]);
+      } catch {
+        setExpenses(initialExpenses);
+      }
+    }
+
+    if (savedCatalogItems) {
+      try {
+        setCatalogItems(JSON.parse(savedCatalogItems) as CatalogItem[]);
+      } catch {
+        setCatalogItems(initialCatalogItems);
+      }
+    }
+
+    if (savedSuppliers) {
+      try {
+        setSuppliers(JSON.parse(savedSuppliers) as Supplier[]);
+      } catch {
+        setSuppliers(initialSuppliers);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("blueprint.activeProjectId", activeProjectId);
+  }, [activeProjectId]);
+
+  useEffect(() => {
+    window.localStorage.setItem("blueprint.projects", JSON.stringify(projects));
+  }, [projects]);
+
+  useEffect(() => {
+    window.localStorage.setItem("blueprint.expenses", JSON.stringify(expenses));
+  }, [expenses]);
+
+  useEffect(() => {
+    window.localStorage.setItem("blueprint.catalogItems", JSON.stringify(catalogItems));
+  }, [catalogItems]);
+
+  useEffect(() => {
+    window.localStorage.setItem("blueprint.suppliers", JSON.stringify(suppliers));
+  }, [suppliers]);
+
+  const activeProject = useMemo(
+    () => projects.find((project) => project.id === activeProjectId) ?? projects[0],
+    [activeProjectId, projects],
+  );
+
+  const projectExpenses = useMemo(
+    () => expenses.filter((expense) => expense.projectId === activeProject.id),
+    [activeProject.id, expenses],
+  );
+
+  function setActiveProjectId(projectId: string) {
+    if (projects.some((project) => project.id === projectId)) {
+      setActiveProjectIdState(projectId);
+    }
+  }
+
+  function addProject(project: Project) {
+    setProjects((currentProjects) => {
+      if (currentProjects.length >= 10) {
+        return currentProjects;
+      }
+
+      return [project, ...currentProjects];
+    });
+    setActiveProjectIdState(project.id);
+  }
+
+  function deleteProject(projectId: string) {
+    setProjects((currentProjects) => {
+      if (currentProjects.length <= 1) {
+        return currentProjects;
+      }
+
+      const nextProjects = currentProjects.filter((project) => project.id !== projectId);
+
+      if (activeProjectId === projectId && nextProjects[0]) {
+        setActiveProjectIdState(nextProjects[0].id);
+      }
+
+      return nextProjects;
+    });
+    setExpenses((currentExpenses) =>
+      currentExpenses.filter((expense) => expense.projectId !== projectId),
+    );
+  }
+
+  function addExpense(expense: Expense) {
+    setExpenses((currentExpenses) => [expense, ...currentExpenses]);
+  }
+
+  function updateExpense(expenseId: string, patch: Partial<Expense>) {
+    setExpenses((currentExpenses) =>
+      currentExpenses.map((expense) =>
+        expense.id === expenseId
+          ? {
+              ...expense,
+              ...patch,
+            }
+          : expense,
+      ),
+    );
+  }
+
+  function addCatalogItem(item: CatalogItem) {
+    setCatalogItems((currentItems) => {
+      const exists = currentItems.some(
+        (currentItem) => currentItem.name.toLowerCase() === item.name.toLowerCase(),
+      );
+
+      return exists ? currentItems : [item, ...currentItems];
+    });
+  }
+
+  function addSupplier(supplier: Supplier) {
+    setSuppliers((currentSuppliers) => {
+      const exists = currentSuppliers.some(
+        (currentSupplier) => currentSupplier.name.toLowerCase() === supplier.name.toLowerCase(),
+      );
+
+      return exists ? currentSuppliers : [supplier, ...currentSuppliers];
+    });
+  }
+
+  function updateSupplier(supplierId: string, patch: Partial<Supplier>) {
+    setSuppliers((currentSuppliers) =>
+      currentSuppliers.map((supplier) =>
+        supplier.id === supplierId
+          ? {
+              ...supplier,
+              ...patch,
+            }
+          : supplier,
+      ),
+    );
+  }
+
+  return (
+    <ProjectContext.Provider
+      value={{
+        activeProject,
+        activeProjectId,
+        addProject,
+        deleteProject,
+        addExpense,
+        updateExpense,
+        addCatalogItem,
+        addSupplier,
+        updateSupplier,
+        catalogItems,
+        expenses,
+        projects,
+        projectExpenses,
+        suppliers,
+        setActiveProjectId,
+      }}
+    >
+      {children}
+    </ProjectContext.Provider>
+  );
+}
+
+export function useProject() {
+  const value = useContext(ProjectContext);
+
+  if (!value) {
+    throw new Error("useProject must be used inside ProjectProvider");
+  }
+
+  return value;
+}

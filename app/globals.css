@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f4f8fc;
+  --foreground: #061c3d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(rgba(12, 115, 184, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 115, 184, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 18% 8%, rgba(27, 167, 225, 0.11), transparent 34rem),
+    var(--background);
+  background-size: 28px 28px, 28px 28px, auto, auto;
+  color: var(--foreground);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(12, 115, 184, 0.2);
+}
+
+.blueprint-panel {
+  border: 1px solid #d8e3ef;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 34px rgba(6, 28, 61, 0.07);
+  backdrop-filter: blur(10px);
+}
+
+.blueprint-rail {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    #061c3d;
+  background-size: 24px 24px;
+}
