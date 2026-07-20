@@ -20,7 +20,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        "h-10 rounded-md border border-blueprint-line bg-white px-3 text-sm text-blueprint-ink outline-none transition placeholder:text-slate-400 focus:border-blueprint-accent focus:ring-4 focus:ring-teal-50",
+        "h-10 rounded-md border border-blueprint-line bg-white px-3 text-sm text-blueprint-ink shadow-[inset_0_1px_0_rgba(6,28,61,0.03)] outline-none transition placeholder:text-slate-400 focus:border-blueprint-accent focus:ring-4 focus:ring-[#dceeff]",
         className,
       )}
       {...props}
@@ -36,7 +36,7 @@ export function Select({
   return (
     <select
       className={cn(
-        "h-10 rounded-md border border-blueprint-line bg-white px-3 text-sm text-blueprint-ink outline-none transition focus:border-blueprint-accent focus:ring-4 focus:ring-teal-50",
+        "h-10 rounded-md border border-blueprint-line bg-white px-3 text-sm text-blueprint-ink shadow-[inset_0_1px_0_rgba(6,28,61,0.03)] outline-none transition focus:border-blueprint-accent focus:ring-4 focus:ring-[#dceeff]",
         className,
       )}
       {...props}

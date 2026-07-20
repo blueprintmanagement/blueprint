@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const projectStatuses: ProjectStatus[] = ["Em andamento", "Planejada", "Pausada"];
-const defaultPhases = "Terraplanagem\nFundacao\nEstrutura\nAlvenaria\nAcabamento";
+const defaultPhases = "Terraplanagem\nFundação\nEstrutura\nAlvenaria\nAcabamento";
 
 type ProjectForm = {
   name: string;
@@ -127,8 +127,8 @@ export function ProjectSelectionPage() {
       name,
       shortName: form.shortName.trim(),
       address: form.address.trim(),
-      owner: form.owner.trim() || "Responsavel nao informado",
-      investor: form.investor.trim() || "Investidor nao informado",
+      owner: form.owner.trim() || "Responsável não informado",
+      investor: form.investor.trim() || "Investidor não informado",
       budget,
       spent: 0,
       status: form.status,
@@ -171,7 +171,7 @@ export function ProjectSelectionPage() {
               Escolha qual obra quer abrir
             </h1>
             <p className="mt-3 max-w-2xl text-sm text-blueprint-muted">
-              Cada obra funciona como um ambiente proprio: despesas, fases, fornecedores usados e dossie mensal ficam focados nela.
+              Cada obra funciona como um ambiente proprio: despesas, fases, fornecedores usados e dossiê mensal ficam focados nela.
             </p>
           </div>
           <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
@@ -222,22 +222,22 @@ export function ProjectSelectionPage() {
           </div>
 
           <div className="mt-3 grid gap-3 lg:grid-cols-[1.5fr_1fr_1fr_180px]">
-            <FieldLabel label="Endereco">
+            <FieldLabel label="Endereço">
               <Input value={form.address} onChange={(event) => updateForm({ address: event.target.value })} placeholder="Rua, bairro, cidade" />
             </FieldLabel>
-            <FieldLabel label="Responsavel">
+            <FieldLabel label="Responsável">
               <Input value={form.owner} onChange={(event) => updateForm({ owner: event.target.value })} placeholder="Dona da obra" />
             </FieldLabel>
             <FieldLabel label="Investidor">
               <Input value={form.investor} onChange={(event) => updateForm({ investor: event.target.value })} placeholder="Nome ou grupo" />
             </FieldLabel>
-            <FieldLabel label="Inicio">
+            <FieldLabel label="Início">
               <Input type="date" value={form.startDate} onChange={(event) => updateForm({ startDate: event.target.value })} />
             </FieldLabel>
           </div>
 
           <div className="mt-3 grid gap-3 lg:grid-cols-[220px_1fr]">
-            <FieldLabel label="Orcamento previsto">
+            <FieldLabel label="Orçamento previsto">
               <Input
                 min="0"
                 step="0.01"
@@ -312,7 +312,7 @@ export function ProjectSelectionPage() {
                   <dd className="mt-1 font-medium text-blueprint-ink">{project.investor}</dd>
                 </div>
                 <div>
-                  <dt className="text-blueprint-muted">Orcamento usado</dt>
+                  <dt className="text-blueprint-muted">Orçamento usado</dt>
                   <dd className="mt-1 font-medium text-blueprint-ink">{percent}%</dd>
                 </div>
               </dl>
@@ -343,7 +343,7 @@ export function ProjectSelectionPage() {
                   className="text-red-700 hover:bg-red-50 hover:text-red-800"
                   disabled={!canDelete}
                   onClick={() => openDelete(project)}
-                  title={canDelete ? "Excluir obra" : "Nao e possivel excluir a ultima obra"}
+                  title={canDelete ? "Excluir obra" : "Não e possivel excluir a ultima obra"}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -370,7 +370,7 @@ export function ProjectSelectionPage() {
                   Excluir {projectToDelete.name}?
                 </h2>
                 <p className="mt-2 text-sm text-blueprint-muted">
-                  Esta acao remove a obra e todos os lancamentos ligados a ela deste prototipo local. Para confirmar, digite o nome exato da obra.
+                  Esta ação remove a obra e todos os lançamentos ligados a ela deste protótipo local. Para confirmar, digite o nome exato da obra.
                 </p>
               </div>
               <Button type="button" variant="ghost" className="h-9 px-2" onClick={closeDelete}>

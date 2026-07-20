@@ -8,8 +8,9 @@ import { FieldLabel, Input, Select } from "@/components/ui/field";
 import { useProject } from "@/components/project-context";
 import { ExpenseType, Supplier } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/format";
+import { displayText } from "@/lib/display";
 
-const supplierTypes: ExpenseType[] = ["Material", "Mao de Obra", "Servico", "Equipamento"];
+const supplierTypes: ExpenseType[] = ["Material", "Mão de Obra", "Serviço", "Equipamento"];
 
 type SupplierForm = {
   name: string;
@@ -96,9 +97,9 @@ export function SuppliersPage() {
 
     const supplierPatch = {
       name: form.name.trim(),
-      document: form.document.trim() || "Documento nao informado",
+      document: form.document.trim() || "Documento não informado",
       category: form.category,
-      contact: form.contact.trim() || "Contato nao informado",
+      contact: form.contact.trim() || "Contato não informado",
       bankInfo: form.bankInfo.trim() || undefined,
     };
 
@@ -124,7 +125,7 @@ export function SuppliersPage() {
               Fornecedores - {activeProject.name}
             </h1>
             <p className="mt-3 max-w-2xl text-sm text-blueprint-muted">
-              Cadastre lojas, empreiteiros e prestadores com contato, documento e dados bancarios para acelerar os lancamentos.
+              Cadastre lojas, empreiteiros e prestadores com contato, documento e dados bancarios para acelerar os lançamentos.
             </p>
           </div>
           <Button onClick={startCreate} className="justify-start">
@@ -168,7 +169,7 @@ export function SuppliersPage() {
                 placeholder="WhatsApp ou email"
               />
             </FieldLabel>
-            <FieldLabel label="Dados bancarios">
+            <FieldLabel label="Dados bancários">
               <Input
                 value={form.bankInfo}
                 onChange={(event) => setForm((current) => ({ ...current, bankInfo: event.target.value }))}
@@ -205,11 +206,11 @@ export function SuppliersPage() {
                 <th className="px-4 py-3 font-semibold">Documento</th>
                 <th className="px-4 py-3 font-semibold">Categoria</th>
                 <th className="px-4 py-3 font-semibold">Contato</th>
-                <th className="px-4 py-3 font-semibold">Dados bancarios</th>
-                <th className="px-4 py-3 text-right font-semibold">Lancamentos</th>
-                <th className="px-4 py-3 text-right font-semibold">Pendencias</th>
+                <th className="px-4 py-3 font-semibold">Dados bancários</th>
+                <th className="px-4 py-3 text-right font-semibold">Lançamentos</th>
+                <th className="px-4 py-3 text-right font-semibold">Pendências</th>
                 <th className="px-4 py-3 text-right font-semibold">Total</th>
-                <th className="px-4 py-3 text-right font-semibold">Acoes</th>
+                <th className="px-4 py-3 text-right font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-blueprint-line">
@@ -218,12 +219,12 @@ export function SuppliersPage() {
                   <td className="px-4 py-4">
                     <div className="font-medium text-blueprint-ink">{supplier.name}</div>
                     {!supplier.isUsedInProject ? (
-                      <div className="text-xs text-blueprint-muted">Ainda nao usado nesta obra</div>
+                      <div className="text-xs text-blueprint-muted">Ainda não usado nesta obra</div>
                     ) : null}
                   </td>
                   <td className="px-4 py-4 text-blueprint-muted">{supplier.document}</td>
                   <td className="px-4 py-4">
-                    <Badge tone="gray">{supplier.category}</Badge>
+                    <Badge tone="gray">{displayText(supplier.category)}</Badge>
                   </td>
                   <td className="px-4 py-4 text-blueprint-muted">{supplier.contact}</td>
                   <td className="px-4 py-4 text-blueprint-muted">{supplier.bankInfo ?? "-"}</td>

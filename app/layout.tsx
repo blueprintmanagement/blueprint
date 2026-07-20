@@ -5,7 +5,7 @@ import { ProjectProvider } from "@/components/project-context";
 
 export const metadata: Metadata = {
   title: "Blueprint",
-  description: "Gestao financeira e suprimentos para construtoras.",
+  description: "Gestão financeira e suprimentos para construtoras.",
 };
 
 export default function RootLayout({

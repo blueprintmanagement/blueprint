@@ -6,6 +6,7 @@ import {
   Supplier,
   suppliers as initialSuppliers,
 } from "@/lib/mock-data";
+import { displayMonthLabel, displayText } from "@/lib/display";
 
 type Worksheet = XLSX.WorkSheet;
 type CellStyle = NonNullable<XLSX.CellObject["s"]>;
@@ -157,7 +158,7 @@ function buildCompleteRows({
     const pendingItems = [
       expense.status === "Pendente" ? "pagamento pendente" : "",
       expense.hasAttachment ? "" : "sem comprovante",
-      expense.sentToAccountant ? "" : "nao enviado",
+      expense.sentToAccountant ? "" : "não enviado",
     ].filter(Boolean);
 
     return [
@@ -169,17 +170,17 @@ function buildCompleteRows({
       expense.invoiceNumber ?? "",
       getProjectName(project, expense.projectId),
       getPhaseName(project, expense.phaseId),
-      expense.description,
+      displayText(expense.description),
       expense.catalogItemId,
       supplier?.name ?? "",
-      supplier?.document ?? "",
+      supplier?.document ? displayText(supplier.document) : "",
       supplier?.contact ?? "",
       supplier?.bankInfo ?? "",
-      expense.type,
+      displayText(expense.type),
       expense.quantity,
       expense.unitValue,
       expense.total,
-      expense.paymentMethod,
+      displayText(expense.paymentMethod),
       expense.status,
       expense.sentToAccountant ? "OK" : "Pendente",
       expense.hasAttachment ? "Anexado" : "Faltando",
@@ -246,19 +247,21 @@ function styleDossierSheet({
   };
 }
 
-export function exportMonthlyWorkbook({
+function exportDossierWorkbook({
   expenses,
-  month,
+  periodLabel,
   project,
   suppliers = initialSuppliers,
+  fileSuffix,
 }: {
   expenses: Expense[];
-  month: string;
+  periodLabel: string;
   project: Project;
   suppliers?: Supplier[];
+  fileSuffix: string;
 }) {
   const filteredExpenses = expenses
-    .filter((expense) => expense.projectId === project.id && expense.purchaseDate.startsWith(month))
+    .filter((expense) => expense.projectId === project.id)
     .sort((a, b) => a.purchaseDate.localeCompare(b.purchaseDate));
   const paid = sum(filteredExpenses.filter((expense) => expense.status === "Pago").map((expense) => expense.total));
   const pending = sum(
@@ -271,24 +274,24 @@ export function exportMonthlyWorkbook({
 
   const columns = [
     "#",
-    "ID Lancamento",
+    "ID Lançamento",
     "Data da Compra",
-    "Data Pagto Fatura",
-    "Data Pagto Loja",
+    "Data Pgto Fatura",
+    "Data Pgto Loja",
     "Nota Fiscal",
     "Obra",
     "Fase",
-    "Ref / Insumo / Servico",
-    "ID Catalogo",
+    "Ref / Insumo / Serviço",
+    "ID Catálogo",
     "Fornecedor",
     "CNPJ/CPF",
     "Contato Fornecedor",
-    "Dados Bancarios",
+    "Dados Bancários",
     "Tipo",
     "Quantidade",
     "Valor Uni",
     "Valor",
-    "Tipo de Pagto",
+    "Tipo de Pgto",
     "Status",
     "Enviado Contador",
     "Comprovante",
@@ -296,17 +299,17 @@ export function exportMonthlyWorkbook({
     "Arquivo Anexo",
     "Tamanho Anexo",
     "Tipo Anexo",
-    "Pendencia",
+    "Pendência",
   ];
   const data = [
     ["Blueprint", ...Array(columns.length - 1).fill("")],
-    ["Dossie completo de despesas", ...Array(columns.length - 1).fill("")],
+    ["Dossiê completo de despesas", ...Array(columns.length - 1).fill("")],
     [],
-    ["Obra", project.name, "Mes", month, "Investidor", project.investor, "Responsavel", project.owner],
-    ["Total Lancado", total, "Pago", paid, "Pendente", pending, "Lancamentos", filteredExpenses.length],
-    ["Sem Comprovante", missingAttachments, "Nao Enviado", notSent, "Gerado em", new Date(), "Status Obra", project.status],
+    ["Obra", project.name, "Período", periodLabel, "Investidor", project.investor, "Responsável", project.owner],
+    ["Total Lançado", total, "Pago", paid, "Pendente", pending, "Lançamentos", filteredExpenses.length],
+    ["Sem Comprovante", missingAttachments, "Não Enviado", notSent, "Gerado em", new Date(), "Status Obra", project.status],
     [],
-    ["Observacao", "Esta aba consolida todos os lancamentos do mes, um por linha, com todos os dados necessarios para contador e investidor."],
+    ["Observação", "Esta aba consolida todos os lançamentos do período, um por linha, com todos os dados necessários para contador e investidor."],
     [],
     columns,
     ...buildCompleteRows({ expenses: filteredExpenses, project, suppliers }),
@@ -316,8 +319,8 @@ export function exportMonthlyWorkbook({
   const sheet = XLSX.utils.aoa_to_sheet(data);
 
   workbook.Props = {
-    Title: `Blueprint - Dossie Completo ${project.name} ${month}`,
-    Subject: "Dossie mensal completo de despesas de obra",
+    Title: `Blueprint - Dossiê Completo ${project.name} ${periodLabel}`,
+    Subject: "Dossiê completo de despesas de obra",
     Author: "Blueprint",
     CreatedDate: new Date(),
   };
@@ -396,8 +399,46 @@ export function exportMonthlyWorkbook({
     colCount: columns.length,
   });
 
-  XLSX.utils.book_append_sheet(workbook, sheet, "Dossie Completo");
-  XLSX.writeFile(workbook, `Blueprint - Dossie Completo ${project.shortName} - ${month}.xlsx`, {
+  XLSX.utils.book_append_sheet(workbook, sheet, "Dossiê Completo");
+  XLSX.writeFile(workbook, `Blueprint - Dossiê Completo ${project.shortName} - ${fileSuffix}.xlsx`, {
     compression: true,
+  });
+}
+
+export function exportMonthlyWorkbook({
+  expenses,
+  month,
+  project,
+  suppliers = initialSuppliers,
+}: {
+  expenses: Expense[];
+  month: string;
+  project: Project;
+  suppliers?: Supplier[];
+}) {
+  exportDossierWorkbook({
+    expenses: expenses.filter((expense) => expense.purchaseDate.startsWith(month)),
+    fileSuffix: month,
+    periodLabel: displayMonthLabel(month),
+    project,
+    suppliers,
+  });
+}
+
+export function exportCompleteWorkbook({
+  expenses,
+  project,
+  suppliers = initialSuppliers,
+}: {
+  expenses: Expense[];
+  project: Project;
+  suppliers?: Supplier[];
+}) {
+  exportDossierWorkbook({
+    expenses,
+    fileSuffix: "Todos os mêses",
+    periodLabel: "Todos os mêses",
+    project,
+    suppliers,
   });
 }

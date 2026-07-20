@@ -10,8 +10,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", ...props }, ref) => {
     const variants: Record<ButtonVariant, string> = {
-      primary: "bg-blueprint-accent text-white hover:bg-[#095f99]",
-      secondary: "border border-blueprint-line bg-white text-blueprint-ink hover:bg-[#eef6fd]",
+      primary: "bg-blueprint-accent text-white shadow-sm hover:bg-[#095f99]",
+      secondary: "border border-blueprint-line bg-white text-blueprint-ink shadow-sm hover:bg-[#eef6fd]",
       ghost: "text-blueprint-muted hover:bg-blueprint-surface hover:text-blueprint-ink",
     };
 

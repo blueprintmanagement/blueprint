@@ -76,7 +76,7 @@ export function ProjectDashboard() {
               className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-blueprint-accent px-4 text-sm font-medium text-white transition hover:bg-[#095f99]"
             >
               <ReceiptText className="h-4 w-4" />
-              Lancar despesa
+              Lançar despesa
             </Link>
           </div>
         </div>
@@ -88,7 +88,7 @@ export function ProjectDashboard() {
           { label: "Pago", value: formatCurrency(paidTotal), icon: WalletCards },
           { label: "Pendente", value: formatCurrency(pendingTotal), icon: AlertCircle },
           { label: "Sem comprovante", value: String(missingAttachments), icon: FileX2 },
-          { label: "Nao enviado ao contador", value: String(notSent), icon: CheckCircle2 },
+          { label: "Não enviado ao contador", value: String(notSent), icon: CheckCircle2 },
         ].map((metric) => (
           <article
             key={metric.label}

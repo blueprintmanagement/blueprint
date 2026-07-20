@@ -24,8 +24,8 @@ type NewExpenseDrawerProps = {
 };
 
 const today = new Date().toISOString().slice(0, 10);
-const typeOptions: ExpenseType[] = ["Material", "Mao de Obra", "Servico", "Equipamento"];
-const commonUnits = ["un", "saco", "m3", "barra", "diaria", "semana", "servico", "dia"];
+const typeOptions: ExpenseType[] = ["Material", "Mão de Obra", "Serviço", "Equipamento"];
+const commonUnits = ["un", "saco", "m3", "barra", "diária", "semana", "serviço", "dia"];
 
 export function NewExpenseDrawer({
   open,
@@ -163,9 +163,9 @@ export function NewExpenseDrawer({
       const newSupplier: Supplier = {
         id: `supplier-${Date.now()}`,
         name: newSupplierName.trim(),
-        document: newSupplierDocument.trim() || "Documento nao informado",
+        document: newSupplierDocument.trim() || "Documento não informado",
         category: itemType,
-        contact: newSupplierContact.trim() || "Contato nao informado",
+        contact: newSupplierContact.trim() || "Contato não informado",
         bankInfo: newSupplierBankInfo.trim() || undefined,
       };
 
@@ -232,7 +232,7 @@ export function NewExpenseDrawer({
           open ? "opacity-100" : "opacity-0",
         )}
         onClick={() => onOpenChange(false)}
-        aria-label="Fechar lancamento"
+        aria-label="Fechar lançamento"
       />
 
       <aside
@@ -246,7 +246,7 @@ export function NewExpenseDrawer({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm text-[#B8D9F2]">{activeProject.name}</p>
-              <h2 className="mt-1 text-xl font-semibold">Lancar compra</h2>
+              <h2 className="mt-1 text-xl font-semibold">Lançar compra</h2>
             </div>
             <button
               type="button"
@@ -265,7 +265,7 @@ export function NewExpenseDrawer({
                 <section className="rounded-lg border border-blueprint-line bg-white p-4 shadow-sm">
                   <div className="flex items-center gap-2 text-sm font-semibold text-blueprint-ink">
                     <Sparkles className="h-4 w-4 text-blueprint-accent" />
-                    Item ou servico
+                    Item ou serviço
                   </div>
                   <div className="mt-4 grid gap-3">
                     <FieldLabel label="Nome do item">
@@ -276,7 +276,7 @@ export function NewExpenseDrawer({
                           setCatalogItemId("");
                           setSaveToCatalog(true);
                         }}
-                        placeholder="Ex: Tela soldada Q138, frete de areia, diaria de gesseiro..."
+                        placeholder="Ex: Tela soldada Q138, frete de areia, diária de gesseiro..."
                       />
                     </FieldLabel>
 
@@ -340,7 +340,7 @@ export function NewExpenseDrawer({
                           checked={saveToCatalog}
                           onChange={(event) => setSaveToCatalog(event.target.checked)}
                         />
-                        Salvar este item no catalogo para proximas compras
+                        Salvar este item no catálogo para próximas compras
                       </label>
                     ) : null}
 
@@ -391,7 +391,7 @@ export function NewExpenseDrawer({
                           placeholder="WhatsApp ou email"
                         />
                       </FieldLabel>
-                      <FieldLabel label="Dados bancarios">
+                      <FieldLabel label="Dados bancários">
                         <Input
                           value={newSupplierBankInfo}
                           onChange={(event) => setNewSupplierBankInfo(event.target.value)}
@@ -439,10 +439,10 @@ export function NewExpenseDrawer({
                     <FieldLabel label="Compra">
                       <Input type="date" value={purchaseDate} onChange={(event) => setPurchaseDate(event.target.value)} />
                     </FieldLabel>
-                    <FieldLabel label="Pagto fatura">
+                    <FieldLabel label="Pgto fatura">
                       <Input type="date" value={invoicePaymentDate} onChange={(event) => setInvoicePaymentDate(event.target.value)} />
                     </FieldLabel>
-                    <FieldLabel label="Pagto loja">
+                    <FieldLabel label="Pgto loja">
                       <Input type="date" value={storePaymentDate} onChange={(event) => setStorePaymentDate(event.target.value)} />
                     </FieldLabel>
                   </div>
@@ -458,7 +458,7 @@ export function NewExpenseDrawer({
                       >
                         <option>PIX</option>
                         <option>Boleto</option>
-                        <option>Cartao</option>
+                        <option>Cartão</option>
                         <option>A Prazo</option>
                       </Select>
                     </FieldLabel>
@@ -491,7 +491,7 @@ export function NewExpenseDrawer({
                     </span>
                     <span className="block text-xs text-blueprint-muted">
                       {attachmentSize
-                        ? `${(attachmentSize / 1024 / 1024).toFixed(2)} MB registrados no prototipo`
+                        ? `${(attachmentSize / 1024 / 1024).toFixed(2)} MB registrados no protótipo`
                         : "PDF, imagem ou foto da nota"}
                     </span>
                   </span>
@@ -519,7 +519,7 @@ export function NewExpenseDrawer({
 
           <footer className="flex flex-col gap-3 border-t border-blueprint-line bg-white px-5 py-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-normal text-blueprint-muted">Total do lancamento</p>
+              <p className="text-xs font-medium uppercase tracking-normal text-blueprint-muted">Total do lançamento</p>
               <p className="text-2xl font-semibold text-blueprint-ink">{formatCurrency(total)}</p>
               <p className="text-xs text-blueprint-muted">
                 {quantity || 0} {unit} x {formatCurrency(unitValue || 0)}
@@ -531,11 +531,11 @@ export function NewExpenseDrawer({
             </Button>
             <Button type="submit" variant="secondary" value="continue">
               <ReceiptText className="h-4 w-4" />
-              Salvar e lancar outro
+              Salvar e lançar outro
             </Button>
             <Button type="submit" value="close">
               <ReceiptText className="h-4 w-4" />
-              Salvar lancamento
+              Salvar lançamento
             </Button>
             </div>
           </footer>

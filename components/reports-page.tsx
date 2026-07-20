@@ -44,24 +44,34 @@ export function ReportsPage() {
     });
   }
 
+  async function handleExportAllMonths() {
+    const { exportCompleteWorkbook } = await import("@/lib/export-month");
+
+    exportCompleteWorkbook({
+      expenses,
+      project: activeProject,
+      suppliers,
+    });
+  }
+
   return (
     <main className="space-y-5">
       <div className="blueprint-panel rounded-lg p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <span className="text-sm font-medium text-blueprint-accent">Dossie da obra</span>
+          <span className="text-sm font-medium text-blueprint-accent">Dossiê da obra</span>
           <h1 className="mt-2 text-2xl font-semibold text-blueprint-ink">
-            Dossie mensal - {activeProject.name}
+            Dossiê mensal - {activeProject.name}
           </h1>
           <p className="mt-3 max-w-2xl text-sm text-blueprint-muted">
-            Fechamento da obra aberta com planilha automatica e lista de pendencias antes do envio ao contador.
+            Fechamento da obra aberta com planilha automática e lista de pendências antes do envio ao contador.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select
             value={month}
             onChange={(event) => setMonth(event.target.value)}
-            aria-label="Selecionar mes do dossie"
+            aria-label="Selecionar mês do dossiê"
           >
             {availableMonths.map((availableMonth) => (
               <option key={availableMonth.value} value={availableMonth.value}>
@@ -75,7 +85,14 @@ export function ReportsPage() {
             onClick={handleExportMonth}
           >
             <Download className="h-4 w-4" />
-            Exportar XLSX
+            Exportar mês
+          </Button>
+          <Button
+            className="w-full justify-start sm:w-auto"
+            onClick={handleExportAllMonths}
+          >
+            <Download className="h-4 w-4" />
+            Exportar todos
           </Button>
         </div>
       </div>
@@ -87,7 +104,7 @@ export function ReportsPage() {
             <div>
               <h2 className="text-base font-semibold text-blueprint-ink">Pacote {month}</h2>
               <p className="mt-1 text-sm text-blueprint-muted">
-                {monthExpenses.length} lancamentos, {attached} com comprovante e {notSent} ainda nao enviados.
+                {monthExpenses.length} lançamentos, {attached} com comprovante e {notSent} ainda não enviados.
               </p>
             </div>
             <Badge tone={readiness === 100 ? "green" : "amber"}>{readiness}% pronto</Badge>
@@ -114,7 +131,7 @@ export function ReportsPage() {
               <p className="mt-2 text-lg font-semibold text-blueprint-ink">{missing}</p>
             </div>
             <div className="rounded-lg border border-blueprint-line p-4">
-              <p className="text-sm text-blueprint-muted">Nao enviado</p>
+              <p className="text-sm text-blueprint-muted">Não enviado</p>
               <p className="mt-2 text-lg font-semibold text-blueprint-ink">{notSent}</p>
             </div>
           </div>
@@ -126,7 +143,7 @@ export function ReportsPage() {
           <div className="mt-4 space-y-3 text-sm">
             <div className="flex items-center gap-2 text-blueprint-ink">
               <CheckCircle2 className="h-4 w-4 text-blueprint-accent" />
-              Lancamentos separados por fase
+              Lançamentos separados por fase
             </div>
             <div className="flex items-center gap-2 text-blueprint-ink">
               {missing === 0 ? (
@@ -156,7 +173,7 @@ export function ReportsPage() {
 
       <section className="blueprint-panel rounded-lg">
         <div className="border-b border-blueprint-line px-5 py-4">
-          <h2 className="text-base font-semibold text-blueprint-ink">Pendencias do dossie</h2>
+          <h2 className="text-base font-semibold text-blueprint-ink">Pendências do dossiê</h2>
         </div>
         <div className="divide-y divide-blueprint-line">
           {monthExpenses
@@ -166,7 +183,7 @@ export function ReportsPage() {
                 <div>
                 <p className="font-medium text-blueprint-ink">{expense.description}</p>
                 <p className="text-xs text-blueprint-muted">
-                  {expense.hasAttachment ? "Com comprovante" : "Sem comprovante"} - {expense.sentToAccountant ? "enviado" : "nao enviado"}
+                  {expense.hasAttachment ? "Com comprovante" : "Sem comprovante"} - {expense.sentToAccountant ? "enviado" : "não enviado"}
                 </p>
               </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -208,7 +225,7 @@ export function ReportsPage() {
             ))}
           {monthExpenses.filter((expense) => !expense.hasAttachment || !expense.sentToAccountant || expense.status === "Pendente").length === 0 ? (
             <p className="px-5 py-8 text-sm text-blueprint-muted">
-              Nenhuma pendencia neste dossie.
+              Nenhuma pendência neste dossiê.
             </p>
           ) : null}
         </div>
@@ -237,7 +254,7 @@ export function ReportsPage() {
           ))}
           {monthExpenses.length === 0 ? (
             <p className="px-5 py-8 text-sm text-blueprint-muted">
-              Nenhum lancamento neste mes.
+              Nenhum lançamento neste mês.
             </p>
           ) : null}
         </div>

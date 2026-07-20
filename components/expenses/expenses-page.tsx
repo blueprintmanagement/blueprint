@@ -18,6 +18,7 @@ import { NewExpenseDrawer } from "@/components/expenses/new-expense-drawer";
 import { useProject } from "@/components/project-context";
 import { formatCurrency } from "@/lib/format";
 import { getAvailableMonths } from "@/lib/months";
+import { displayText } from "@/lib/display";
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -81,10 +82,10 @@ export function ExpensesPage() {
       .map((expense) => {
         const phaseName =
           activeProject.phases.find((phase) => phase.id === expense.phaseId)?.name ??
-          "Fase nao encontrada";
+          "Fase não encontrada";
         const supplierName =
           suppliers.find((supplier) => supplier.id === expense.supplierId)?.name ??
-          "Fornecedor nao encontrado";
+          "Fornecedor não encontrado";
 
         return {
           ...expense,
@@ -128,6 +129,16 @@ export function ExpensesPage() {
     });
   }
 
+  async function handleExportAllMonths() {
+    const { exportCompleteWorkbook } = await import("@/lib/export-month");
+
+    exportCompleteWorkbook({
+      expenses,
+      project: activeProject,
+      suppliers,
+    });
+  }
+
   return (
     <main className="space-y-5">
       <div className="blueprint-panel rounded-lg p-5">
@@ -138,7 +149,7 @@ export function ExpensesPage() {
             {activeProject.name}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-blueprint-muted">
-            Lance compras livres, reaproveite o catalogo quando ajudar e feche o mes com uma planilha limpa.
+            Lance compras livres, reaproveite o catálogo quando ajudar e feche o mês com uma planilha limpa.
           </p>
         </div>
 
@@ -149,7 +160,15 @@ export function ExpensesPage() {
             onClick={handleExportMonth}
           >
             <Download className="h-4 w-4" />
-            Exportar Mes XLSX
+            Exportar mês
+          </Button>
+          <Button
+            variant="secondary"
+            className="justify-start"
+            onClick={handleExportAllMonths}
+          >
+            <Download className="h-4 w-4" />
+            Exportar todos
           </Button>
           <Button onClick={() => setIsDrawerOpen(true)} className="justify-start">
             <Plus className="h-4 w-4" />
@@ -172,15 +191,15 @@ export function ExpensesPage() {
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-normal text-[#B8D9F2]">Pendencias</p>
+            <p className="text-xs uppercase tracking-normal text-[#B8D9F2]">Pendências</p>
             <p className="mt-1 flex items-center gap-2 text-sm">
               <AlertCircle className="h-4 w-4 text-[#f1b56f]" />
-              {missingAttachments} sem anexo · {notSent} nao enviados
+              {missingAttachments} sem anexo · {notSent} não enviados
             </p>
           </div>
           <div className="flex items-center md:justify-end">
             <Badge tone={missingAttachments === 0 && notSent === 0 ? "green" : "amber"}>
-              Dossie {missingAttachments === 0 && notSent === 0 ? "pronto" : "incompleto"}
+              Dossiê {missingAttachments === 0 && notSent === 0 ? "pronto" : "incompleto"}
             </Badge>
           </div>
         </div>
@@ -189,7 +208,7 @@ export function ExpensesPage() {
       <section className="blueprint-panel overflow-hidden rounded-lg">
         <div className="grid gap-3 border-b border-blueprint-line p-4 xl:grid-cols-[150px_190px_150px_190px_160px_170px_1fr]">
           <Select
-            aria-label="Filtrar por mes"
+            aria-label="Filtrar por mês"
             value={monthFilter}
             onChange={(event) => setMonthFilter(event.target.value)}
           >
@@ -257,7 +276,7 @@ export function ExpensesPage() {
           >
             <option value="all">Todos envios</option>
             <option value="sent">Enviado</option>
-            <option value="pending">Nao enviado</option>
+            <option value="pending">Não enviado</option>
           </Select>
 
           <div className="relative">
@@ -273,10 +292,10 @@ export function ExpensesPage() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blueprint-line bg-[#fbfcf8] px-4 py-3">
           <p className="text-sm font-medium text-blueprint-ink">
-            {rows.length} lancamentos encontrados
+            {rows.length} lançamentos encontrados
           </p>
-          <p className="text-xs text-blueprint-muted">
-            A exportacao gera uma planilha unica com todos os dados linha a linha.
+            <p className="text-xs text-blueprint-muted">
+            A exportação gera uma planilha única com todos os dados linha a linha.
           </p>
         </div>
 
@@ -295,7 +314,7 @@ export function ExpensesPage() {
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 text-center font-semibold">Anexo</th>
                 <th className="px-4 py-3 text-center font-semibold">Envio</th>
-                <th className="px-4 py-3 text-right font-semibold">Acoes</th>
+                <th className="px-4 py-3 text-right font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-blueprint-line">
@@ -315,7 +334,7 @@ export function ExpensesPage() {
                   <td className="px-4 py-4">
                     <div className="font-medium text-blueprint-ink">{expense.description}</div>
                     <div className="text-xs text-blueprint-muted">
-                      {expense.quantity} x {formatCurrency(expense.unitValue)} - {expense.paymentMethod}
+                      {expense.quantity} x {formatCurrency(expense.unitValue)} - {displayText(expense.paymentMethod)}
                     </div>
                   </td>
                   <td className="px-4 py-4 text-blueprint-muted">{expense.supplierName}</td>
