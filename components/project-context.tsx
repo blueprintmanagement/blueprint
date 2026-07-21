@@ -27,6 +27,7 @@ type ProjectContextValue = {
   catalogItems: CatalogItem[];
   suppliers: Supplier[];
   addProject: (project: Project) => void;
+  updateProject: (projectId: string, patch: Partial<Project>) => void;
   deleteProject: (projectId: string) => void;
   addExpense: (expense: Expense) => void;
   updateExpense: (expenseId: string, patch: Partial<Expense>) => void;
@@ -140,6 +141,19 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setActiveProjectIdState(project.id);
   }
 
+  function updateProject(projectId: string, patch: Partial<Project>) {
+    setProjects((currentProjects) =>
+      currentProjects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              ...patch,
+            }
+          : project,
+      ),
+    );
+  }
+
   function deleteProject(projectId: string) {
     setProjects((currentProjects) => {
       if (currentProjects.length <= 1) {
@@ -215,6 +229,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         activeProject,
         activeProjectId,
         addProject,
+        updateProject,
         deleteProject,
         addExpense,
         updateExpense,

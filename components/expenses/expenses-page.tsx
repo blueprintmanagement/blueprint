@@ -31,7 +31,7 @@ function formatDate(date: string) {
 export function ExpensesPage() {
   const { activeProject, addExpense, expenses, projectExpenses, suppliers, updateExpense } = useProject();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [monthFilter, setMonthFilter] = useState("2026-03");
+  const [monthFilter, setMonthFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [phaseFilter, setPhaseFilter] = useState("all");
   const [supplierFilter, setSupplierFilter] = useState("all");
@@ -44,8 +44,12 @@ export function ExpensesPage() {
   );
 
   useEffect(() => {
+    if (monthFilter === "all") {
+      return;
+    }
+
     if (!availableMonths.some((month) => month.value === monthFilter)) {
-      setMonthFilter(availableMonths[0]?.value ?? new Date().toISOString().slice(0, 7));
+      setMonthFilter("all");
     }
   }, [availableMonths, monthFilter]);
 
@@ -53,7 +57,7 @@ export function ExpensesPage() {
     const normalizedSearch = search.trim().toLowerCase();
 
     return projectExpenses
-      .filter((expense) => expense.purchaseDate.startsWith(monthFilter))
+      .filter((expense) => monthFilter === "all" || expense.purchaseDate.startsWith(monthFilter))
       .filter((expense) => statusFilter === "all" || expense.status === statusFilter)
       .filter((expense) => phaseFilter === "all" || expense.phaseId === phaseFilter)
       .filter((expense) => supplierFilter === "all" || expense.supplierId === supplierFilter)
@@ -119,7 +123,16 @@ export function ExpensesPage() {
   const notSent = rows.filter((expense) => !expense.sentToAccountant).length;
 
   async function handleExportMonth() {
-    const { exportMonthlyWorkbook } = await import("@/lib/export-month");
+    const { exportCompleteWorkbook, exportMonthlyWorkbook } = await import("@/lib/export-month");
+
+    if (monthFilter === "all") {
+      exportCompleteWorkbook({
+        expenses,
+        project: activeProject,
+        suppliers,
+      });
+      return;
+    }
 
     exportMonthlyWorkbook({
       expenses,
@@ -212,6 +225,7 @@ export function ExpensesPage() {
             value={monthFilter}
             onChange={(event) => setMonthFilter(event.target.value)}
           >
+            <option value="all">Todos os meses</option>
             {availableMonths.map((month) => (
               <option key={month.value} value={month.value}>
                 {month.label}

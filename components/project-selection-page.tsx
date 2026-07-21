@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Plus, Trash2, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, Input, Select } from "@/components/ui/field";
@@ -71,8 +71,10 @@ export function ProjectSelectionPage() {
     expenses,
     projects,
     setActiveProjectId,
+    updateProject,
   } = useProject();
   const [isCreating, setIsCreating] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [form, setForm] = useState<ProjectForm>(emptyProjectForm);
   const [formError, setFormError] = useState("");
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -95,14 +97,39 @@ export function ProjectSelectionPage() {
 
   function resetCreateForm() {
     setIsCreating(false);
+    setEditingProjectId(null);
     setForm(emptyProjectForm);
+    setFormError("");
+  }
+
+  function startCreateProject() {
+    setIsCreating(true);
+    setEditingProjectId(null);
+    setForm(emptyProjectForm);
+    setFormError("");
+  }
+
+  function startEditProject(project: Project) {
+    setIsCreating(true);
+    setEditingProjectId(project.id);
+    setForm({
+      name: project.name,
+      shortName: project.shortName,
+      address: project.address,
+      owner: project.owner,
+      investor: project.investor === "Nenhum" ? "" : project.investor,
+      budget: String(project.budget),
+      status: project.status,
+      startDate: project.startDate,
+      phases: project.phases.map((phase) => phase.name).join("\n"),
+    });
     setFormError("");
   }
 
   function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (projectLimitReached) {
+    if (!editingProjectId && projectLimitReached) {
       setFormError("O limite atual de testes e de 10 obras simultaneas.");
       return;
     }
@@ -120,6 +147,23 @@ export function ProjectSelectionPage() {
       return;
     }
 
+    const investor = form.investor.trim() || "Nenhum";
+
+    if (editingProjectId) {
+      updateProject(editingProjectId, {
+        name,
+        shortName: form.shortName.trim(),
+        address: form.address.trim(),
+        owner: form.owner.trim() || "Responsável não informado",
+        investor,
+        budget,
+        status: form.status,
+        startDate: form.startDate || new Date().toISOString().slice(0, 10),
+      });
+      resetCreateForm();
+      return;
+    }
+
     const baseId = slugify(name) || "obra";
     const projectId = `project-${baseId}-${Date.now()}`;
     const project: Project = {
@@ -128,7 +172,7 @@ export function ProjectSelectionPage() {
       shortName: form.shortName.trim(),
       address: form.address.trim(),
       owner: form.owner.trim() || "Responsável não informado",
-      investor: form.investor.trim() || "Investidor não informado",
+      investor,
       budget,
       spent: 0,
       status: form.status,
@@ -180,7 +224,7 @@ export function ProjectSelectionPage() {
             </Badge>
             <Button
               type="button"
-              onClick={() => setIsCreating(true)}
+              onClick={startCreateProject}
               disabled={projectLimitReached}
               className="justify-start"
             >
@@ -195,9 +239,13 @@ export function ProjectSelectionPage() {
         <form onSubmit={submitProject} className="blueprint-panel rounded-lg p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-blueprint-ink">Criar obra do zero</h2>
+              <h2 className="text-base font-semibold text-blueprint-ink">
+                {editingProjectId ? "Editar obra" : "Criar obra do zero"}
+              </h2>
               <p className="mt-1 text-sm text-blueprint-muted">
-                Defina as fases iniciais uma por linha. Depois poderemos evoluir isso para edicao completa.
+                {editingProjectId
+                  ? "Atualize os dados administrativos da obra sem alterar os lançamentos existentes."
+                  : "Defina as fases iniciais uma por linha. Depois poderemos evoluir isso para edição completa."}
               </p>
             </div>
             <Button type="button" variant="ghost" className="h-9 px-2" onClick={resetCreateForm}>
@@ -229,7 +277,7 @@ export function ProjectSelectionPage() {
               <Input value={form.owner} onChange={(event) => updateForm({ owner: event.target.value })} placeholder="Dona da obra" />
             </FieldLabel>
             <FieldLabel label="Investidor">
-              <Input value={form.investor} onChange={(event) => updateForm({ investor: event.target.value })} placeholder="Nome ou grupo" />
+              <Input value={form.investor} onChange={(event) => updateForm({ investor: event.target.value })} placeholder="Nome, grupo ou deixe em branco para Nenhum" />
             </FieldLabel>
             <FieldLabel label="Início">
               <Input type="date" value={form.startDate} onChange={(event) => updateForm({ startDate: event.target.value })} />
@@ -247,13 +295,19 @@ export function ProjectSelectionPage() {
                 placeholder="0,00"
               />
             </FieldLabel>
-            <FieldLabel label="Fases iniciais">
-              <textarea
-                value={form.phases}
-                onChange={(event) => updateForm({ phases: event.target.value })}
-                className="min-h-24 rounded-md border border-blueprint-line bg-white px-3 py-2 text-sm text-blueprint-ink outline-none transition placeholder:text-slate-400 focus:border-blueprint-accent focus:ring-4 focus:ring-[#dceeff]"
-              />
-            </FieldLabel>
+            {!editingProjectId ? (
+              <FieldLabel label="Fases iniciais">
+                <textarea
+                  value={form.phases}
+                  onChange={(event) => updateForm({ phases: event.target.value })}
+                  className="min-h-24 rounded-md border border-blueprint-line bg-white px-3 py-2 text-sm text-blueprint-ink outline-none transition placeholder:text-slate-400 focus:border-blueprint-accent focus:ring-4 focus:ring-[#dceeff]"
+                />
+              </FieldLabel>
+            ) : (
+              <div className="rounded-md border border-blueprint-line bg-blueprint-surface px-3 py-2 text-sm text-blueprint-muted">
+                As fases da obra serão editáveis em uma etapa própria para não quebrar despesas já vinculadas.
+              </div>
+            )}
           </div>
 
           {formError ? (
@@ -267,8 +321,8 @@ export function ProjectSelectionPage() {
               Cancelar
             </Button>
             <Button type="submit">
-              <Plus className="h-4 w-4" />
-              Criar e abrir obra
+              {editingProjectId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+              {editingProjectId ? "Salvar alterações" : "Criar e abrir obra"}
             </Button>
           </div>
         </form>
@@ -328,7 +382,7 @@ export function ProjectSelectionPage() {
                 {formatCurrency(spent)} de {formatCurrency(project.budget)}
               </p>
 
-              <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto]">
+              <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                 <Button
                   className="w-full"
                   variant={isActive ? "secondary" : "primary"}
@@ -336,6 +390,14 @@ export function ProjectSelectionPage() {
                 >
                   {isActive ? "Obra selecionada" : "Abrir obra"}
                   <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => startEditProject(project)}
+                  title="Editar obra"
+                >
+                  <Pencil className="h-4 w-4" />
                 </Button>
                 <Button
                   type="button"
