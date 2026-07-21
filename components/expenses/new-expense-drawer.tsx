@@ -279,7 +279,7 @@ export function NewExpenseDrawer({
       <button
         type="button"
         className={cn(
-          "absolute inset-0 bg-[#111827]/40 transition-opacity",
+          "absolute inset-0 bg-[#061c3d]/38 backdrop-blur-sm transition-opacity",
           open ? "opacity-100" : "opacity-0",
         )}
         onClick={() => onOpenChange(false)}
@@ -288,7 +288,7 @@ export function NewExpenseDrawer({
 
       <aside
         className={cn(
-          "absolute right-0 top-0 flex h-full w-full max-w-4xl flex-col border-l border-blueprint-line bg-[#f7fbff] shadow-soft transition-transform duration-300",
+          "absolute right-0 top-0 flex h-full w-full max-w-4xl flex-col border-l border-blueprint-line bg-blueprint-surface shadow-lift transition-transform duration-300",
           open ? "translate-x-0" : "translate-x-full",
         )}
         aria-hidden={!open}
@@ -296,7 +296,7 @@ export function NewExpenseDrawer({
         <header className="border-b border-blueprint-line bg-blueprint-ink px-5 py-4 text-white">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm text-[#B8D9F2]">{activeProject.name}</p>
+              <p className="text-sm font-medium text-[#B8D9F2]">{activeProject.name}</p>
               <h2 className="mt-1 text-xl font-semibold">
                 {isEditing ? "Editar despesa" : "Lançar compra"}
               </h2>
@@ -315,7 +315,7 @@ export function NewExpenseDrawer({
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={submitExpense}>
           <div className="flex-1 overflow-y-auto px-5 py-5">
             <div className="space-y-4">
-                <section className="rounded-lg border border-blueprint-line bg-white p-4 shadow-sm">
+                <section className="rounded-lg border border-blueprint-line bg-white/92 p-4 shadow-sm">
                   <div className="flex items-center gap-2 text-sm font-semibold text-blueprint-ink">
                     <Sparkles className="h-4 w-4 text-blueprint-accent" />
                     Item ou serviço
@@ -378,7 +378,7 @@ export function NewExpenseDrawer({
                             "rounded-full border px-3 py-1.5 text-xs font-medium transition",
                             catalogItemId === item.id
                               ? "border-blueprint-accent bg-[#e7f4fd] text-blueprint-ink"
-                              : "border-blueprint-line bg-[#f5f9fd] text-blueprint-muted hover:border-blueprint-accent hover:text-blueprint-ink",
+                              : "border-blueprint-line bg-blueprint-surface text-blueprint-muted hover:border-blueprint-accent hover:bg-white hover:text-blueprint-ink",
                           )}
                         >
                           {item.name}
@@ -387,7 +387,7 @@ export function NewExpenseDrawer({
                     </div>
 
                     {!catalogItemId && itemName.trim() ? (
-                      <label className="flex items-center gap-2 rounded-md bg-[#f5f9fd] px-3 py-2 text-sm text-blueprint-ink">
+                      <label className="flex items-center gap-2 rounded-md border border-blueprint-line bg-blueprint-surface px-3 py-2 text-sm text-blueprint-ink">
                         <input
                           type="checkbox"
                           checked={saveToCatalog}
@@ -398,7 +398,7 @@ export function NewExpenseDrawer({
                     ) : null}
 
                     {priceHistory.length ? (
-                      <div className="rounded-md border border-blueprint-line bg-[#f8fbff] px-3 py-2 text-sm">
+                      <div className="rounded-md border border-blueprint-line bg-blueprint-mist/60 px-3 py-2 text-sm">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="font-medium text-blueprint-ink">Histórico deste item</span>
                           <span className={cn("text-xs font-medium", Math.abs(priceDelta) > 15 ? "text-amber-700" : "text-blueprint-muted")}>
@@ -418,7 +418,7 @@ export function NewExpenseDrawer({
                 </section>
 
                 {supplierId === "new" ? (
-                  <section className="rounded-lg border border-blueprint-line bg-white p-4 shadow-sm">
+                  <section className="rounded-lg border border-blueprint-line bg-white/92 p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-sm font-semibold text-blueprint-ink">
                       Novo fornecedor
                     </div>
@@ -455,7 +455,7 @@ export function NewExpenseDrawer({
                   </section>
                 ) : null}
 
-                <section className="rounded-lg border border-blueprint-line bg-white p-4 shadow-sm">
+                <section className="rounded-lg border border-blueprint-line bg-white/92 p-4 shadow-sm">
                   <div className="grid gap-3 md:grid-cols-[1fr_140px_180px]">
                     <FieldLabel label="Fase">
                       <Select value={phaseId} onChange={(event) => setPhaseId(event.target.value)}>
@@ -487,7 +487,7 @@ export function NewExpenseDrawer({
                   </div>
                 </section>
 
-                <section className="rounded-lg border border-blueprint-line bg-white p-4 shadow-sm">
+                <section className="rounded-lg border border-blueprint-line bg-white/92 p-4 shadow-sm">
                   <div className="grid gap-3 md:grid-cols-3">
                     <FieldLabel label="Compra">
                       <Input type="date" value={purchaseDate} onChange={(event) => setPurchaseDate(event.target.value)} />
@@ -527,7 +527,7 @@ export function NewExpenseDrawer({
                   </div>
                 </section>
                 <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-                <label className="flex items-center gap-3 rounded-lg border border-blueprint-line bg-white p-3 text-sm text-blueprint-ink shadow-sm">
+                <label className="flex items-center gap-3 rounded-lg border border-blueprint-line bg-white/92 p-3 text-sm text-blueprint-ink shadow-sm">
                   <input
                     type="checkbox"
                     checked={sentToAccountant}
@@ -536,7 +536,7 @@ export function NewExpenseDrawer({
                   Enviado ao contador/investidor
                 </label>
 
-                <label className="flex cursor-pointer items-center justify-center gap-3 rounded-lg border border-dashed border-blueprint-line bg-white px-4 py-4 text-center shadow-sm transition hover:border-blueprint-accent hover:bg-[#eef6fd]">
+                <label className="flex cursor-pointer items-center justify-center gap-3 rounded-lg border border-dashed border-blueprint-line bg-white/92 px-4 py-4 text-center shadow-sm transition hover:border-blueprint-accent hover:bg-[#eef6fd]">
                   <FileUp className="h-6 w-6 text-blueprint-accent" />
                   <span>
                     <span className="block text-sm font-medium text-blueprint-ink">
@@ -570,7 +570,7 @@ export function NewExpenseDrawer({
             </div>
           </div>
 
-          <footer className="flex flex-col gap-3 border-t border-blueprint-line bg-white px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <footer className="flex flex-col gap-3 border-t border-blueprint-line bg-white/92 px-5 py-4 shadow-[0_-12px_28px_rgba(6,28,61,0.05)] md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-normal text-blueprint-muted">Total do lançamento</p>
               <p className="text-2xl font-semibold text-blueprint-ink">{formatCurrency(total)}</p>

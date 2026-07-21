@@ -56,14 +56,14 @@ export function ReportsPage() {
 
   return (
     <main className="space-y-5">
-      <div className="blueprint-panel rounded-lg p-5">
+      <div className="blueprint-panel overflow-hidden rounded-lg p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <span className="text-sm font-medium text-blueprint-accent">Dossiê da obra</span>
-          <h1 className="mt-2 text-2xl font-semibold text-blueprint-ink">
+          <span className="blueprint-kicker">Dossiê da obra</span>
+          <h1 className="mt-3 text-3xl font-semibold text-blueprint-ink">
             Dossiê mensal - {activeProject.name}
           </h1>
-          <p className="mt-3 max-w-2xl text-sm text-blueprint-muted">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-blueprint-muted">
             Fechamento da obra aberta com planilha automática e lista de pendências antes do envio ao contador.
           </p>
         </div>
@@ -118,19 +118,19 @@ export function ReportsPage() {
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-blueprint-line p-4">
+            <div className="rounded-lg border border-blueprint-line bg-white/70 p-4">
               <p className="text-sm text-blueprint-muted">Total</p>
               <p className="mt-2 text-lg font-semibold text-blueprint-ink">{formatCurrency(total)}</p>
             </div>
-            <div className="rounded-lg border border-blueprint-line p-4">
+            <div className="rounded-lg border border-blueprint-line bg-white/70 p-4">
               <p className="text-sm text-blueprint-muted">Anexos</p>
               <p className="mt-2 text-lg font-semibold text-blueprint-ink">{attached}</p>
             </div>
-            <div className="rounded-lg border border-blueprint-line p-4">
+            <div className="rounded-lg border border-blueprint-line bg-white/70 p-4">
               <p className="text-sm text-blueprint-muted">Sem anexo</p>
               <p className="mt-2 text-lg font-semibold text-blueprint-ink">{missing}</p>
             </div>
-            <div className="rounded-lg border border-blueprint-line p-4">
+            <div className="rounded-lg border border-blueprint-line bg-white/70 p-4">
               <p className="text-sm text-blueprint-muted">Não enviado</p>
               <p className="mt-2 text-lg font-semibold text-blueprint-ink">{notSent}</p>
             </div>
@@ -164,7 +164,7 @@ export function ReportsPage() {
           </div>
           <Link
             href="/despesas"
-            className="mt-5 inline-flex h-10 w-full items-center justify-start rounded-md bg-blueprint-accent px-4 text-sm font-medium text-white transition hover:bg-[#095f99]"
+            className="mt-5 inline-flex h-10 w-full items-center justify-start rounded-md bg-blueprint-accent px-4 text-sm font-medium text-white shadow-[0_10px_22px_rgba(11,118,189,0.22)] transition hover:bg-[#0867a7]"
           >
             Revisar despesas
           </Link>
@@ -179,7 +179,7 @@ export function ReportsPage() {
           {monthExpenses
             .filter((expense) => !expense.hasAttachment || !expense.sentToAccountant || expense.status === "Pendente")
             .map((expense) => (
-              <div key={expense.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <div key={expense.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 transition hover:bg-white/70">
                 <div>
                 <p className="font-medium text-blueprint-ink">{expense.description}</p>
                 <p className="text-xs text-blueprint-muted">
@@ -240,7 +240,7 @@ export function ReportsPage() {
         </div>
         <div className="divide-y divide-blueprint-line">
           {monthExpenses.map((expense) => (
-            <div key={expense.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+            <div key={expense.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 transition hover:bg-white/70">
               <div>
                 <p className="font-medium text-blueprint-ink">
                   {expense.invoiceNumber ? `NF ${expense.invoiceNumber}` : `Comprovante ${expense.paymentMethod}`}

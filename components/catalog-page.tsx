@@ -137,14 +137,14 @@ export function CatalogPage() {
 
   return (
     <main className="space-y-5">
-      <div className="blueprint-panel rounded-lg p-5">
+      <div className="blueprint-panel overflow-hidden rounded-lg p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <span className="text-sm font-medium text-blueprint-accent">Catálogo base</span>
-            <h1 className="mt-2 text-2xl font-semibold text-blueprint-ink">
+            <span className="blueprint-kicker">Catálogo base</span>
+            <h1 className="mt-3 text-3xl font-semibold text-blueprint-ink">
               Insumos e serviços
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-blueprint-muted">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-blueprint-muted">
               Organize itens recorrentes para acelerar lançamentos e reduzir erros de digitação.
             </p>
           </div>
@@ -156,7 +156,7 @@ export function CatalogPage() {
       </div>
 
       {isEditing ? (
-        <form onSubmit={submitItem} className="blueprint-panel rounded-lg p-5">
+        <form onSubmit={submitItem} className="blueprint-panel rounded-lg p-5 shadow-lift">
           <div className="grid gap-3 lg:grid-cols-[1.4fr_180px_140px_180px]">
             <FieldLabel label="Nome">
               <Input
@@ -212,7 +212,7 @@ export function CatalogPage() {
       ) : null}
 
       <section className="blueprint-panel overflow-hidden rounded-lg">
-        <div className="grid gap-3 border-b border-blueprint-line p-4 md:grid-cols-[220px_1fr]">
+        <div className="grid gap-3 border-b border-blueprint-line bg-white/70 p-4 md:grid-cols-[220px_1fr]">
           <Select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} aria-label="Filtrar por tipo">
             <option value="all">Todos os tipos</option>
             {itemTypes.map((type) => (
@@ -229,8 +229,8 @@ export function CatalogPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="bg-blueprint-surface text-xs uppercase tracking-normal text-blueprint-muted">
+          <table className="blueprint-table w-full min-w-[900px] text-left text-sm">
+            <thead>
               <tr>
                 <th className="px-4 py-3 font-semibold">Item</th>
                 <th className="px-4 py-3 font-semibold">Tipo</th>
@@ -245,7 +245,7 @@ export function CatalogPage() {
                 const usageCount = usageByItem[item.id] ?? 0;
 
                 return (
-                  <tr key={item.id} className="bg-white hover:bg-[#f5f9fd]">
+                  <tr key={item.id} className="bg-white">
                     <td className="px-4 py-4 font-medium text-blueprint-ink">{item.name}</td>
                     <td className="px-4 py-4">
                       <Badge tone="gray">{displayText(item.type)}</Badge>

@@ -322,14 +322,14 @@ export function ProjectSelectionPage() {
 
   return (
     <main className="space-y-6">
-      <div className="blueprint-panel rounded-lg p-5">
+      <div className="blueprint-panel overflow-hidden rounded-lg p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <span className="text-sm font-medium text-blueprint-accent">Selecionar obra</span>
-            <h1 className="mt-2 text-2xl font-semibold text-blueprint-ink">
+            <span className="blueprint-kicker">Selecionar obra</span>
+            <h1 className="mt-3 text-3xl font-semibold text-blueprint-ink">
               Escolha qual obra quer abrir
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-blueprint-muted">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-blueprint-muted">
               Cada obra funciona como um ambiente proprio: despesas, fases, fornecedores usados e dossiê mensal ficam focados nela.
             </p>
           </div>
@@ -351,7 +351,7 @@ export function ProjectSelectionPage() {
       </div>
 
       {isCreating ? (
-        <form onSubmit={submitProject} className="blueprint-panel rounded-lg p-5">
+        <form onSubmit={submitProject} className="blueprint-panel rounded-lg p-5 shadow-lift">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-blueprint-ink">
@@ -581,12 +581,14 @@ export function ProjectSelectionPage() {
             <article
               key={project.id}
               className={cn(
-                "rounded-lg border bg-white p-5 shadow-sm transition",
-                isActive ? "border-blueprint-accent ring-4 ring-[#dceeff]" : "border-blueprint-line hover:-translate-y-0.5 hover:border-blueprint-accent",
+                "group rounded-lg border bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lift",
+                isActive
+                  ? "border-blueprint-accent ring-4 ring-[#dceeff]"
+                  : "border-blueprint-line hover:border-blueprint-accent",
               )}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blueprint-ink text-lg font-semibold text-white">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blueprint-ink text-lg font-semibold text-white shadow-sm transition group-hover:bg-blueprint-accent">
                   {project.shortName.slice(0, 2).toUpperCase()}
                 </div>
                 {isActive ? (

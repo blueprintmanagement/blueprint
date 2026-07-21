@@ -178,14 +178,14 @@ export function ExpensesPage() {
 
   return (
     <main className="space-y-5">
-      <div className="blueprint-panel rounded-lg p-5">
+      <div className="blueprint-panel overflow-hidden rounded-lg p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <span className="text-sm font-medium text-blueprint-accent">Livro de despesas</span>
-          <h1 className="mt-2 text-2xl font-semibold text-blueprint-ink">
+          <span className="blueprint-kicker">Livro de despesas</span>
+          <h1 className="mt-3 text-3xl font-semibold text-blueprint-ink">
             {activeProject.name}
           </h1>
-          <p className="mt-2 max-w-3xl text-sm text-blueprint-muted">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-blueprint-muted">
             Lance compras livres, reaproveite o catálogo quando ajudar e feche o mês com uma planilha limpa.
           </p>
         </div>
@@ -215,7 +215,7 @@ export function ExpensesPage() {
       </div>
       </div>
 
-      <section className="rounded-lg border border-blueprint-line bg-blueprint-ink p-4 text-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-blueprint-line bg-blueprint-ink p-4 text-white shadow-soft">
         <div className="grid gap-4 md:grid-cols-[1.1fr_1fr_1fr_1fr]">
           <div>
             <p className="text-xs uppercase tracking-normal text-[#B8D9F2]">Total filtrado</p>
@@ -243,7 +243,7 @@ export function ExpensesPage() {
       </section>
 
       <section className="blueprint-panel overflow-hidden rounded-lg">
-        <div className="grid gap-3 border-b border-blueprint-line p-4 xl:grid-cols-[150px_190px_150px_190px_160px_170px_1fr]">
+        <div className="grid gap-3 border-b border-blueprint-line bg-white/70 p-4 xl:grid-cols-[150px_190px_150px_190px_160px_170px_1fr]">
           <Select
             aria-label="Filtrar por mês"
             value={monthFilter}
@@ -328,7 +328,7 @@ export function ExpensesPage() {
             />
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blueprint-line bg-[#fbfcf8] px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blueprint-line bg-blueprint-mist/60 px-4 py-3">
           <p className="text-sm font-medium text-blueprint-ink">
             {rows.length} lançamentos encontrados
           </p>
@@ -338,8 +338,8 @@ export function ExpensesPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1320px] border-collapse text-left text-sm">
-            <thead className="bg-blueprint-surface text-xs uppercase tracking-normal text-blueprint-muted">
+          <table className="blueprint-table w-full min-w-[1320px] border-collapse text-left text-sm">
+            <thead>
               <tr>
                 <th className="px-4 py-3 font-semibold">Compra</th>
                 <th className="px-4 py-3 font-semibold">Fatura</th>
@@ -357,7 +357,7 @@ export function ExpensesPage() {
             </thead>
             <tbody className="divide-y divide-blueprint-line">
               {rows.map((expense) => (
-                <tr key={expense.id} className="bg-white transition hover:bg-[#fbf7ef]">
+                <tr key={expense.id} className="bg-white">
                   <td className="whitespace-nowrap px-4 py-4 text-blueprint-muted">
                     {formatDate(expense.purchaseDate)}
                   </td>

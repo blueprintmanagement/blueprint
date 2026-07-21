@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #f4f8fc;
+  --background: #f6f9fc;
   --foreground: #061c3d;
 }
 
@@ -14,11 +14,10 @@
 body {
   margin: 0;
   background:
-    linear-gradient(rgba(12, 115, 184, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(12, 115, 184, 0.055) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 248, 252, 0.96)),
+    linear-gradient(135deg, rgba(11, 118, 189, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 252, 0.98)),
     var(--background);
-  background-size: 28px 28px, 28px 28px, auto, auto;
+  background-attachment: fixed;
   color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   text-rendering: geometricPrecision;
@@ -36,15 +35,41 @@ textarea {
 }
 
 .blueprint-panel {
-  border: 1px solid #d8e3ef;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 12px 28px rgba(6, 28, 61, 0.06);
+  border: 1px solid rgba(183, 202, 222, 0.72);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 46px rgba(6, 28, 61, 0.07);
+  backdrop-filter: blur(18px);
 }
 
 .blueprint-rail {
   background:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(180deg, #061c3d 0%, #08264f 58%, #061c3d 100%);
-  background-size: 24px 24px, 24px 24px, auto;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 249, 252, 0.84)),
+    linear-gradient(135deg, rgba(11, 118, 189, 0.1), transparent 42%);
+  backdrop-filter: blur(24px);
+}
+
+.blueprint-kicker {
+  color: #0b76bd;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.blueprint-table thead {
+  background: #f6f9fc;
+  color: #66758c;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.blueprint-table tbody tr {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.blueprint-table tbody tr:hover {
+  background: #fbfdff;
+  box-shadow: inset 3px 0 0 #0b76bd;
 }

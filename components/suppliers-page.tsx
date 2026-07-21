@@ -117,14 +117,14 @@ export function SuppliersPage() {
 
   return (
     <main className="space-y-5">
-      <div className="blueprint-panel rounded-lg p-5">
+      <div className="blueprint-panel overflow-hidden rounded-lg p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <span className="text-sm font-medium text-blueprint-accent">Cadastro financeiro</span>
-            <h1 className="mt-2 text-2xl font-semibold text-blueprint-ink">
+            <span className="blueprint-kicker">Cadastro financeiro</span>
+            <h1 className="mt-3 text-3xl font-semibold text-blueprint-ink">
               Fornecedores - {activeProject.name}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm text-blueprint-muted">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-blueprint-muted">
               Cadastre lojas, empreiteiros e prestadores com contato, documento e dados bancarios para acelerar os lançamentos.
             </p>
           </div>
@@ -136,7 +136,7 @@ export function SuppliersPage() {
       </div>
 
       {isCreating || editingId ? (
-        <form onSubmit={submitSupplier} className="blueprint-panel rounded-lg p-5">
+        <form onSubmit={submitSupplier} className="blueprint-panel rounded-lg p-5 shadow-lift">
           <div className="grid gap-3 lg:grid-cols-[1.3fr_180px_180px_1fr_1fr]">
             <FieldLabel label="Nome">
               <Input
@@ -197,10 +197,10 @@ export function SuppliersPage() {
         </form>
       ) : null}
 
-      <section className="overflow-hidden rounded-lg border border-blueprint-line bg-white shadow-sm">
+      <section className="blueprint-panel overflow-hidden rounded-lg">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1020px] text-left text-sm">
-            <thead className="bg-blueprint-surface text-xs uppercase tracking-normal text-blueprint-muted">
+          <table className="blueprint-table w-full min-w-[1020px] text-left text-sm">
+            <thead>
               <tr>
                 <th className="px-4 py-3 font-semibold">Fornecedor</th>
                 <th className="px-4 py-3 font-semibold">Documento</th>
@@ -215,7 +215,7 @@ export function SuppliersPage() {
             </thead>
             <tbody className="divide-y divide-blueprint-line">
               {supplierRows.map((supplier) => (
-                <tr key={supplier.id} className={supplier.isUsedInProject ? "bg-white hover:bg-[#f5f9fd]" : "bg-slate-50/70 hover:bg-slate-50"}>
+                <tr key={supplier.id} className={supplier.isUsedInProject ? "bg-white" : "bg-slate-50/70"}>
                   <td className="px-4 py-4">
                     <div className="font-medium text-blueprint-ink">{supplier.name}</div>
                     {!supplier.isUsedInProject ? (
