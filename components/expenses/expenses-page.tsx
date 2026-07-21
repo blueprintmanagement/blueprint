@@ -7,9 +7,11 @@ import {
   Download,
   FileCheck2,
   FileX2,
+  Pencil,
   Plus,
   Search,
   Send,
+  Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,7 @@ import { useProject } from "@/components/project-context";
 import { formatCurrency } from "@/lib/format";
 import { getAvailableMonths } from "@/lib/months";
 import { displayText } from "@/lib/display";
+import { Expense } from "@/lib/mock-data";
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -29,8 +32,9 @@ function formatDate(date: string) {
 }
 
 export function ExpensesPage() {
-  const { activeProject, addExpense, expenses, projectExpenses, suppliers, updateExpense } = useProject();
+  const { activeProject, addExpense, deleteExpense, expenses, projectExpenses, suppliers, updateExpense } = useProject();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [monthFilter, setMonthFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [phaseFilter, setPhaseFilter] = useState("all");
@@ -152,6 +156,26 @@ export function ExpensesPage() {
     });
   }
 
+  function openCreateExpense() {
+    setEditingExpense(null);
+    setIsDrawerOpen(true);
+  }
+
+  function openEditExpense(expense: Expense) {
+    setEditingExpense(expense);
+    setIsDrawerOpen(true);
+  }
+
+  function handleDeleteExpense(expense: Expense) {
+    const confirmed = window.confirm(
+      `Excluir a despesa "${expense.description}" no valor de ${formatCurrency(expense.total)}? Esta ação remove o lançamento deste protótipo local.`,
+    );
+
+    if (confirmed) {
+      deleteExpense(expense.id);
+    }
+  }
+
   return (
     <main className="space-y-5">
       <div className="blueprint-panel rounded-lg p-5">
@@ -183,7 +207,7 @@ export function ExpensesPage() {
             <Download className="h-4 w-4" />
             Exportar todos
           </Button>
-          <Button onClick={() => setIsDrawerOpen(true)} className="justify-start">
+          <Button onClick={openCreateExpense} className="justify-start">
             <Plus className="h-4 w-4" />
             Nova Despesa
           </Button>
@@ -421,6 +445,24 @@ export function ExpensesPage() {
                           }}
                         />
                       </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-8 px-2"
+                        title="Editar despesa"
+                        onClick={() => openEditExpense(expense)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-8 px-2 text-red-700 hover:bg-red-50 hover:text-red-800"
+                        title="Excluir despesa"
+                        onClick={() => handleDeleteExpense(expense)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -439,11 +481,18 @@ export function ExpensesPage() {
       </section>
 
       <NewExpenseDrawer
+        editingExpense={editingExpense}
         open={isDrawerOpen}
         onCreateExpense={(expense) => {
           addExpense(expense);
         }}
-        onOpenChange={setIsDrawerOpen}
+        onUpdateExpense={updateExpense}
+        onOpenChange={(open) => {
+          setIsDrawerOpen(open);
+          if (!open) {
+            setEditingExpense(null);
+          }
+        }}
       />
     </main>
   );

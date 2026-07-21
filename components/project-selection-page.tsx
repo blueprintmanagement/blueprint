@@ -130,7 +130,7 @@ export function ProjectSelectionPage() {
     event.preventDefault();
 
     if (!editingProjectId && projectLimitReached) {
-      setFormError("O limite atual de testes e de 10 obras simultaneas.");
+      setFormError("O limite atual de testes e de 10 obras simultâneas.");
       return;
     }
 
@@ -138,12 +138,12 @@ export function ProjectSelectionPage() {
     const budget = Number(form.budget);
 
     if (!name || !form.shortName.trim() || !form.address.trim()) {
-      setFormError("Informe nome, apelido e endereco da obra.");
+      setFormError("Informe nome, apelido e endereço da obra.");
       return;
     }
 
     if (!budget || budget <= 0) {
-      setFormError("Informe um orcamento valido maior que zero.");
+      setFormError("Informe um orçamento válido maior que zero.");
       return;
     }
 
@@ -405,7 +405,7 @@ export function ProjectSelectionPage() {
                   className="text-red-700 hover:bg-red-50 hover:text-red-800"
                   disabled={!canDelete}
                   onClick={() => openDelete(project)}
-                  title={canDelete ? "Excluir obra" : "Não e possivel excluir a ultima obra"}
+                  title={canDelete ? "Excluir obra" : "Não e possível excluir a última obra"}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -455,7 +455,7 @@ export function ProjectSelectionPage() {
                   checked={deleteAcknowledged}
                   onChange={(event) => setDeleteAcknowledged(event.target.checked)}
                 />
-                Entendo que as despesas desta obra serao removidas do ambiente local de testes.
+                Entendo que as despesas desta obra serão removidas do ambiente local de testes.
               </label>
             </div>
 

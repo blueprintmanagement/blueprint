@@ -7,6 +7,7 @@ import {
   ChevronDown,
   FileBarChart2,
   LayoutDashboard,
+  PackageSearch,
   ReceiptText,
   Truck,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Despesas", href: "/despesas", icon: ReceiptText, helper: "Lançamentos" },
   { name: "Obras", href: "/obras", icon: Building2, helper: "Selecionar" },
   { name: "Fornecedores", href: "/fornecedores", icon: Truck, helper: "Base" },
+  { name: "Catálogo", href: "/catalogo", icon: PackageSearch, helper: "Itens" },
   { name: "Relatórios", href: "/relatorios", icon: FileBarChart2, helper: "Dossiê" },
 ];
 

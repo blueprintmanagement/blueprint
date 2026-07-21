@@ -20,7 +20,9 @@ import { cn } from "@/lib/utils";
 type NewExpenseDrawerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateExpense: (expense: Expense) => void;
+  onCreateExpense?: (expense: Expense) => void;
+  onUpdateExpense?: (expenseId: string, patch: Partial<Expense>) => void;
+  editingExpense?: Expense | null;
 };
 
 const today = new Date().toISOString().slice(0, 10);
@@ -28,8 +30,10 @@ const typeOptions: ExpenseType[] = ["Material", "Mão de Obra", "Serviço", "Equ
 const commonUnits = ["un", "saco", "m3", "barra", "diária", "semana", "serviço", "dia"];
 
 export function NewExpenseDrawer({
+  editingExpense,
   open,
   onCreateExpense,
+  onUpdateExpense,
   onOpenChange,
 }: NewExpenseDrawerProps) {
   const {
@@ -64,10 +68,44 @@ export function NewExpenseDrawer({
   const [attachmentSize, setAttachmentSize] = useState<number | undefined>();
   const [attachmentType, setAttachmentType] = useState("");
   const [error, setError] = useState("");
+  const isEditing = Boolean(editingExpense);
 
   useEffect(() => {
     setPhaseId(activeProject.phases[0]?.id ?? "");
   }, [activeProject.id, activeProject.phases]);
+
+  useEffect(() => {
+    if (!open || !editingExpense) {
+      return;
+    }
+
+    setPhaseId(editingExpense.phaseId);
+    setSupplierId(editingExpense.supplierId);
+    setNewSupplierName("");
+    setNewSupplierDocument("");
+    setNewSupplierContact("");
+    setNewSupplierBankInfo("");
+    setCatalogItemId(editingExpense.catalogItemId === "item-manual" ? "" : editingExpense.catalogItemId);
+    setItemName(editingExpense.description);
+    setItemType(editingExpense.type);
+    setUnit(
+      catalogItems.find((item) => item.id === editingExpense.catalogItemId)?.unit ?? "un",
+    );
+    setQuantity(editingExpense.quantity);
+    setUnitValue(editingExpense.unitValue);
+    setSaveToCatalog(false);
+    setPurchaseDate(editingExpense.purchaseDate);
+    setInvoicePaymentDate(editingExpense.invoicePaymentDate ?? "");
+    setStorePaymentDate(editingExpense.storePaymentDate ?? "");
+    setInvoiceNumber(editingExpense.invoiceNumber ?? "");
+    setPaymentMethod(editingExpense.paymentMethod);
+    setStatus(editingExpense.status);
+    setSentToAccountant(editingExpense.sentToAccountant);
+    setAttachmentName(editingExpense.attachmentName ?? "");
+    setAttachmentSize(editingExpense.attachmentSize);
+    setAttachmentType(editingExpense.attachmentType ?? "");
+    setError("");
+  }, [catalogItems, editingExpense, open]);
 
   const suggestions = useMemo(() => {
     const normalized = itemName.trim().toLowerCase();
@@ -174,7 +212,7 @@ export function NewExpenseDrawer({
     }
 
     if (quantity <= 0 || unitValue <= 0) {
-      setError("Quantidade e valor unitario precisam ser maiores que zero.");
+      setError("Quantidade e valor unitário precisam ser maiores que zero.");
       return;
     }
 
@@ -192,7 +230,7 @@ export function NewExpenseDrawer({
       finalCatalogItemId = newItem.id;
     }
 
-    onCreateExpense({
+    const expensePayload: Expense = {
       id: `exp-${Date.now()}`,
       projectId: activeProject.id,
       phaseId,
@@ -215,7 +253,20 @@ export function NewExpenseDrawer({
       attachmentName: attachmentName || undefined,
       attachmentSize,
       attachmentType: attachmentType || undefined,
-    });
+    };
+
+    if (editingExpense) {
+      onUpdateExpense?.(editingExpense.id, {
+        ...expensePayload,
+        id: editingExpense.id,
+        projectId: editingExpense.projectId,
+      });
+      resetForm();
+      onOpenChange(false);
+      return;
+    }
+
+    onCreateExpense?.(expensePayload);
 
     resetForm();
     if (!shouldContinue) {
@@ -246,7 +297,9 @@ export function NewExpenseDrawer({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm text-[#B8D9F2]">{activeProject.name}</p>
-              <h2 className="mt-1 text-xl font-semibold">Lançar compra</h2>
+              <h2 className="mt-1 text-xl font-semibold">
+                {isEditing ? "Editar despesa" : "Lançar compra"}
+              </h2>
             </div>
             <button
               type="button"
@@ -347,9 +400,9 @@ export function NewExpenseDrawer({
                     {priceHistory.length ? (
                       <div className="rounded-md border border-blueprint-line bg-[#f8fbff] px-3 py-2 text-sm">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="font-medium text-blueprint-ink">Historico deste item</span>
+                          <span className="font-medium text-blueprint-ink">Histórico deste item</span>
                           <span className={cn("text-xs font-medium", Math.abs(priceDelta) > 15 ? "text-amber-700" : "text-blueprint-muted")}>
-                            ultimo preco {formatCurrency(lastPrice ?? 0)}
+                            último preço {formatCurrency(lastPrice ?? 0)}
                           </span>
                         </div>
                         <div className="mt-2 grid gap-1 text-xs text-blueprint-muted">
@@ -395,7 +448,7 @@ export function NewExpenseDrawer({
                         <Input
                           value={newSupplierBankInfo}
                           onChange={(event) => setNewSupplierBankInfo(event.target.value)}
-                          placeholder="Pix, banco ou agencia/conta"
+                          placeholder="Pix, banco ou agência/conta"
                         />
                       </FieldLabel>
                     </div>
@@ -422,7 +475,7 @@ export function NewExpenseDrawer({
                         onChange={(event) => setQuantity(Number(event.target.value))}
                       />
                     </FieldLabel>
-                    <FieldLabel label="Valor unitario">
+                    <FieldLabel label="Valor unitário">
                       <Input
                         min="0"
                         step="0.01"
@@ -529,13 +582,15 @@ export function NewExpenseDrawer({
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="secondary" value="continue">
-              <ReceiptText className="h-4 w-4" />
-              Salvar e lançar outro
-            </Button>
+            {!isEditing ? (
+              <Button type="submit" variant="secondary" value="continue">
+                <ReceiptText className="h-4 w-4" />
+                Salvar e lançar outro
+              </Button>
+            ) : null}
             <Button type="submit" value="close">
               <ReceiptText className="h-4 w-4" />
-              Salvar lançamento
+              {isEditing ? "Salvar alterações" : "Salvar lançamento"}
             </Button>
             </div>
           </footer>

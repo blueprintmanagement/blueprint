@@ -173,7 +173,7 @@ export function SuppliersPage() {
               <Input
                 value={form.bankInfo}
                 onChange={(event) => setForm((current) => ({ ...current, bankInfo: event.target.value }))}
-                placeholder="Pix, banco ou agencia/conta"
+                placeholder="Pix, banco ou agência/conta"
               />
             </FieldLabel>
           </div>

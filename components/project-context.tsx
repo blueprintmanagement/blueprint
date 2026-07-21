@@ -31,7 +31,10 @@ type ProjectContextValue = {
   deleteProject: (projectId: string) => void;
   addExpense: (expense: Expense) => void;
   updateExpense: (expenseId: string, patch: Partial<Expense>) => void;
+  deleteExpense: (expenseId: string) => void;
   addCatalogItem: (item: CatalogItem) => void;
+  updateCatalogItem: (itemId: string, patch: Partial<CatalogItem>) => void;
+  deleteCatalogItem: (itemId: string) => void;
   addSupplier: (supplier: Supplier) => void;
   updateSupplier: (supplierId: string, patch: Partial<Supplier>) => void;
   setActiveProjectId: (projectId: string) => void;
@@ -190,6 +193,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
+  function deleteExpense(expenseId: string) {
+    setExpenses((currentExpenses) =>
+      currentExpenses.filter((expense) => expense.id !== expenseId),
+    );
+  }
+
   function addCatalogItem(item: CatalogItem) {
     setCatalogItems((currentItems) => {
       const exists = currentItems.some(
@@ -198,6 +207,23 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
       return exists ? currentItems : [item, ...currentItems];
     });
+  }
+
+  function updateCatalogItem(itemId: string, patch: Partial<CatalogItem>) {
+    setCatalogItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              ...patch,
+            }
+          : item,
+      ),
+    );
+  }
+
+  function deleteCatalogItem(itemId: string) {
+    setCatalogItems((currentItems) => currentItems.filter((item) => item.id !== itemId));
   }
 
   function addSupplier(supplier: Supplier) {
@@ -233,7 +259,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         deleteProject,
         addExpense,
         updateExpense,
+        deleteExpense,
         addCatalogItem,
+        updateCatalogItem,
+        deleteCatalogItem,
         addSupplier,
         updateSupplier,
         catalogItems,
