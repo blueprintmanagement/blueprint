@@ -39,6 +39,7 @@ export function ProjectDashboard() {
 
     return {
       ...phase,
+      hasBudget: phase.budget > 0,
       total,
       percent: phase.budget ? Math.round((total / phase.budget) * 100) : 0,
     };
@@ -110,17 +111,23 @@ export function ProjectDashboard() {
                   <div>
                     <p className="font-medium text-blueprint-ink">{phase.name}</p>
                     <p className="text-xs text-blueprint-muted">
-                      {formatCurrency(phase.total)} de {formatCurrency(phase.budget)}
+                      {phase.hasBudget
+                        ? `${formatCurrency(phase.total)} de ${formatCurrency(phase.budget)}`
+                        : `${formatCurrency(phase.total)} registrados`}
                     </p>
                   </div>
-                  <Badge tone={phase.percent > 85 ? "amber" : "gray"}>{phase.percent}%</Badge>
+                  <Badge tone={phase.hasBudget && phase.percent > 85 ? "amber" : "gray"}>
+                    {phase.hasBudget ? `${phase.percent}%` : "sem orçamento"}
+                  </Badge>
                 </div>
-                <div className="mt-3 h-2 rounded-full bg-slate-100">
-                  <div
-                    className="h-2 rounded-full bg-blueprint-accent"
-                    style={{ width: `${Math.min(phase.percent, 100)}%` }}
-                  />
-                </div>
+                {phase.hasBudget ? (
+                  <div className="mt-3 h-2 rounded-full bg-slate-100">
+                    <div
+                      className="h-2 rounded-full bg-blueprint-accent"
+                      style={{ width: `${Math.min(phase.percent, 100)}%` }}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

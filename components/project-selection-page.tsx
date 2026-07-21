@@ -24,6 +24,7 @@ type ProjectForm = {
   status: ProjectStatus;
   startDate: string;
   phases: string;
+  phaseBudgets: Record<string, string>;
 };
 
 const emptyProjectForm: ProjectForm = {
@@ -36,6 +37,7 @@ const emptyProjectForm: ProjectForm = {
   status: "Planejada",
   startDate: new Date().toISOString().slice(0, 10),
   phases: defaultPhases,
+  phaseBudgets: {},
 };
 
 function slugify(value: string) {
@@ -48,19 +50,40 @@ function slugify(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-function buildPhases(projectId: string, phasesText: string, budget: number): Phase[] {
-  const names = phasesText
-    .split("\n")
-    .map((phase) => phase.trim())
-    .filter(Boolean);
-  const phaseNames = names.length ? names : defaultPhases.split("\n");
-  const phaseBudget = phaseNames.length ? Math.round((budget / phaseNames.length) * 100) / 100 : 0;
+function parseCurrencyInput(value: string) {
+  const normalized = value.replace(/\./g, "").replace(",", ".").trim();
 
-  return phaseNames.map((name, index) => ({
+  return Number(normalized);
+}
+
+function parsePhaseLine(line: string) {
+  const [rawName, rawBudget] = line.split("|");
+  const budget = rawBudget ? parseCurrencyInput(rawBudget) : 0;
+
+  return {
+    budget: Number.isFinite(budget) && budget > 0 ? budget : 0,
+    name: rawName.trim(),
+  };
+}
+
+function buildPhases(projectId: string, phasesText: string): Phase[] {
+  const parsedPhases = phasesText
+    .split("\n")
+    .map(parsePhaseLine)
+    .filter((phase) => phase.name);
+  const phaseRows = parsedPhases.length
+    ? parsedPhases
+    : defaultPhases.split("\n").map((name) => ({ budget: 0, name }));
+
+  return phaseRows.map((phase, index) => ({
     id: `${projectId}-phase-${index + 1}`,
-    name,
-    budget: phaseBudget,
+    name: phase.name,
+    budget: phase.budget,
   }));
+}
+
+function sumPhaseBudgets(phases: Phase[]) {
+  return phases.reduce((total, phase) => total + phase.budget, 0);
 }
 
 export function ProjectSelectionPage() {
@@ -122,6 +145,10 @@ export function ProjectSelectionPage() {
       status: project.status,
       startDate: project.startDate,
       phases: project.phases.map((phase) => phase.name).join("\n"),
+      phaseBudgets: project.phases.reduce<Record<string, string>>((acc, phase) => {
+        acc[phase.id] = phase.budget ? String(phase.budget) : "";
+        return acc;
+      }, {}),
     });
     setFormError("");
   }
@@ -135,28 +162,41 @@ export function ProjectSelectionPage() {
     }
 
     const name = form.name.trim();
-    const budget = Number(form.budget);
+    const explicitBudget = parseCurrencyInput(form.budget);
 
     if (!name || !form.shortName.trim() || !form.address.trim()) {
       setFormError("Informe nome, apelido e endereço da obra.");
       return;
     }
 
-    if (!budget || budget <= 0) {
-      setFormError("Informe um orçamento válido maior que zero.");
+    if (form.budget.trim() && (!Number.isFinite(explicitBudget) || explicitBudget < 0)) {
+      setFormError("Informe um orçamento válido ou deixe o campo em branco.");
       return;
     }
 
     const investor = form.investor.trim() || "Nenhum";
 
     if (editingProjectId) {
+      const currentProject = projects.find((project) => project.id === editingProjectId);
+      const updatedPhases =
+        currentProject?.phases.map((phase) => {
+          const phaseBudget = parseCurrencyInput(form.phaseBudgets[phase.id] ?? "");
+
+          return {
+            ...phase,
+            budget: Number.isFinite(phaseBudget) && phaseBudget > 0 ? phaseBudget : 0,
+          };
+        }) ?? [];
+      const fallbackBudget = sumPhaseBudgets(updatedPhases);
+
       updateProject(editingProjectId, {
         name,
         shortName: form.shortName.trim(),
         address: form.address.trim(),
         owner: form.owner.trim() || "Responsável não informado",
         investor,
-        budget,
+        budget: form.budget.trim() ? explicitBudget : fallbackBudget,
+        phases: updatedPhases,
         status: form.status,
         startDate: form.startDate || new Date().toISOString().slice(0, 10),
       });
@@ -166,6 +206,8 @@ export function ProjectSelectionPage() {
 
     const baseId = slugify(name) || "obra";
     const projectId = `project-${baseId}-${Date.now()}`;
+    const phases = buildPhases(projectId, form.phases);
+    const fallbackBudget = sumPhaseBudgets(phases);
     const project: Project = {
       id: projectId,
       name,
@@ -173,11 +215,11 @@ export function ProjectSelectionPage() {
       address: form.address.trim(),
       owner: form.owner.trim() || "Responsável não informado",
       investor,
-      budget,
+      budget: form.budget.trim() ? explicitBudget : fallbackBudget,
       spent: 0,
       status: form.status,
       startDate: form.startDate || new Date().toISOString().slice(0, 10),
-      phases: buildPhases(projectId, form.phases, budget),
+      phases,
     };
 
     addProject(project);
@@ -292,7 +334,7 @@ export function ProjectSelectionPage() {
                 type="number"
                 value={form.budget}
                 onChange={(event) => updateForm({ budget: event.target.value })}
-                placeholder="0,00"
+                placeholder="Opcional"
               />
             </FieldLabel>
             {!editingProjectId ? (
@@ -300,12 +342,39 @@ export function ProjectSelectionPage() {
                 <textarea
                   value={form.phases}
                   onChange={(event) => updateForm({ phases: event.target.value })}
+                  placeholder={"Fundação | 92000\nAlvenaria | 86500\nAcabamento"}
                   className="min-h-24 rounded-md border border-blueprint-line bg-white px-3 py-2 text-sm text-blueprint-ink outline-none transition placeholder:text-slate-400 focus:border-blueprint-accent focus:ring-4 focus:ring-[#dceeff]"
                 />
+                <span className="text-xs font-normal text-blueprint-muted">
+                  Use uma fase por linha. O valor depois de | é opcional.
+                </span>
               </FieldLabel>
             ) : (
-              <div className="rounded-md border border-blueprint-line bg-blueprint-surface px-3 py-2 text-sm text-blueprint-muted">
-                As fases da obra serão editáveis em uma etapa própria para não quebrar despesas já vinculadas.
+              <div className="rounded-md border border-blueprint-line bg-blueprint-surface p-3">
+                <p className="text-sm font-medium text-blueprint-ink">Orçamento por fase</p>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {projects
+                    .find((project) => project.id === editingProjectId)
+                    ?.phases.map((phase) => (
+                      <FieldLabel key={phase.id} label={phase.name}>
+                        <Input
+                          min="0"
+                          step="0.01"
+                          type="number"
+                          value={form.phaseBudgets[phase.id] ?? ""}
+                          onChange={(event) =>
+                            updateForm({
+                              phaseBudgets: {
+                                ...form.phaseBudgets,
+                                [phase.id]: event.target.value,
+                              },
+                            })
+                          }
+                          placeholder="Sem orçamento"
+                        />
+                      </FieldLabel>
+                    ))}
+                </div>
               </div>
             )}
           </div>
@@ -332,7 +401,8 @@ export function ProjectSelectionPage() {
         {projects.map((project) => {
           const isActive = project.id === activeProjectId;
           const spent = projectSpend[project.id] ?? 0;
-          const percent = project.budget ? Math.round((spent / project.budget) * 100) : 0;
+          const hasBudget = project.budget > 0;
+          const percent = hasBudget ? Math.round((spent / project.budget) * 100) : 0;
           const canDelete = projects.length > 1;
 
           return (
@@ -367,19 +437,23 @@ export function ProjectSelectionPage() {
                 </div>
                 <div>
                   <dt className="text-blueprint-muted">Orçamento usado</dt>
-                  <dd className="mt-1 font-medium text-blueprint-ink">{percent}%</dd>
+                  <dd className="mt-1 font-medium text-blueprint-ink">
+                    {hasBudget ? `${percent}%` : "Sem orçamento"}
+                  </dd>
                 </div>
               </dl>
 
-              <div className="mt-5 h-2 rounded-full bg-slate-100">
-                <div
-                  className="h-2 rounded-full bg-blueprint-accent"
-                  style={{ width: `${Math.min(percent, 100)}%` }}
-                />
-              </div>
+              {hasBudget ? (
+                <div className="mt-5 h-2 rounded-full bg-slate-100">
+                  <div
+                    className="h-2 rounded-full bg-blueprint-accent"
+                    style={{ width: `${Math.min(percent, 100)}%` }}
+                  />
+                </div>
+              ) : null}
 
               <p className="mt-3 text-sm text-blueprint-muted">
-                {formatCurrency(spent)} de {formatCurrency(project.budget)}
+                {hasBudget ? `${formatCurrency(spent)} de ${formatCurrency(project.budget)}` : `${formatCurrency(spent)} registrados`}
               </p>
 
               <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
