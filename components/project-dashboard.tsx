@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useProject } from "@/components/project-context";
-import { deliveryMovements, suppliers } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/format";
 
 function formatDate(date: string) {
@@ -44,10 +43,6 @@ export function ProjectDashboard() {
       percent: phase.budget ? Math.round((total / phase.budget) * 100) : 0,
     };
   });
-
-  const activeDeliveries = deliveryMovements.filter(
-    (movement) => movement.projectId === activeProject.id,
-  );
 
   return (
     <main className="space-y-6">
@@ -103,7 +98,7 @@ export function ProjectDashboard() {
         ))}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1fr_420px]">
+      <section className="grid gap-5">
         <div className="blueprint-panel rounded-lg">
           <div className="border-b border-blueprint-line px-5 py-4">
             <h2 className="text-base font-semibold text-blueprint-ink">Gasto por fase</h2>
@@ -128,39 +123,6 @@ export function ProjectDashboard() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div className="blueprint-panel rounded-lg">
-          <div className="border-b border-blueprint-line px-5 py-4">
-            <h2 className="text-base font-semibold text-blueprint-ink">Itens com entrega parcial</h2>
-          </div>
-          <div className="divide-y divide-blueprint-line">
-            {activeDeliveries.length ? (
-              activeDeliveries.map((movement) => {
-                const supplier = suppliers.find((item) => item.id === movement.supplierId);
-
-                return (
-                  <div key={movement.id} className="px-5 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-blueprint-ink">{movement.itemName}</p>
-                        <p className="mt-1 text-xs text-blueprint-muted">
-                          {supplier?.name} - entregue para {movement.deliveredTo}
-                        </p>
-                      </div>
-                      <Badge tone={movement.balance === 0 ? "green" : "amber"}>
-                        saldo {movement.balance}
-                      </Badge>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="px-5 py-8 text-sm text-blueprint-muted">
-                Sem entregas parciais registradas para esta obra.
-              </p>
-            )}
           </div>
         </div>
       </section>

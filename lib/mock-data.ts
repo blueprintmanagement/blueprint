@@ -65,20 +65,6 @@ export type Expense = {
   attachmentType?: string;
 };
 
-export type DeliveryMovement = {
-  id: string;
-  projectId: string;
-  supplierId: string;
-  itemName: string;
-  purchaseDate: string;
-  purchasedQuantity: number;
-  unit: string;
-  deliveredQuantity: number;
-  balance: number;
-  deliveredTo: string;
-  deliveryDate?: string;
-};
-
 export const projects: Project[] = [
   {
     id: "project-vivaldino",
@@ -439,47 +425,5 @@ export const expenses: Expense[] = [
     status: "Pendente",
     sentToAccountant: false,
     hasAttachment: false,
-  },
-];
-
-export const deliveryMovements: DeliveryMovement[] = [
-  {
-    id: "del-viv-001",
-    projectId: "project-vivaldino",
-    supplierId: "supplier-taqi",
-    itemName: "Cimento",
-    purchaseDate: "2026-02-25",
-    purchasedQuantity: 100,
-    unit: "saco",
-    deliveryDate: "2026-03-11",
-    deliveredQuantity: 30,
-    balance: 70,
-    deliveredTo: "Dudu",
-  },
-  {
-    id: "del-viv-002",
-    projectId: "project-vivaldino",
-    supplierId: "supplier-taqi",
-    itemName: "Cimento",
-    purchaseDate: "2026-02-25",
-    purchasedQuantity: 100,
-    unit: "saco",
-    deliveryDate: "2026-03-16",
-    deliveredQuantity: 20,
-    balance: 50,
-    deliveredTo: "Dudu",
-  },
-  {
-    id: "del-viv-003",
-    projectId: "project-vivaldino",
-    supplierId: "supplier-taqi",
-    itemName: "Cimento",
-    purchaseDate: "2026-04-09",
-    purchasedQuantity: 200,
-    unit: "saco",
-    deliveryDate: "2026-04-23",
-    deliveredQuantity: 20,
-    balance: 160,
-    deliveredTo: "Wilson/Jardel",
   },
 ];
