@@ -13,6 +13,25 @@ import { cn } from "@/lib/utils";
 
 const projectStatuses: ProjectStatus[] = ["Em andamento", "Planejada", "Pausada"];
 const defaultPhases = "Terraplanagem\nFundação\nEstrutura\nAlvenaria\nAcabamento";
+const budgetModes = [
+  {
+    description: "A obra começa apenas registrando gastos. O orçamento pode ser definido depois.",
+    label: "Sem orçamento definido",
+    value: "none",
+  },
+  {
+    description: "Informe um valor total simples para acompanhar quanto já foi usado.",
+    label: "Orçamento geral",
+    value: "general",
+  },
+  {
+    description: "Distribua valores entre as fases para comparar o gasto por etapa.",
+    label: "Por fase",
+    value: "byPhase",
+  },
+] as const;
+
+type BudgetMode = (typeof budgetModes)[number]["value"];
 
 type ProjectForm = {
   name: string;
@@ -21,6 +40,7 @@ type ProjectForm = {
   owner: string;
   investor: string;
   budget: string;
+  budgetMode: BudgetMode;
   status: ProjectStatus;
   startDate: string;
   phases: string;
@@ -34,6 +54,7 @@ const emptyProjectForm: ProjectForm = {
   owner: "",
   investor: "",
   budget: "",
+  budgetMode: "none",
   status: "Planejada",
   startDate: new Date().toISOString().slice(0, 10),
   phases: defaultPhases,
@@ -51,39 +72,64 @@ function slugify(value: string) {
 }
 
 function parseCurrencyInput(value: string) {
-  const normalized = value.replace(/\./g, "").replace(",", ".").trim();
+  const normalized = value
+    .replace(/[R$\s]/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".")
+    .trim();
 
   return Number(normalized);
 }
 
-function parsePhaseLine(line: string) {
-  const [rawName, rawBudget] = line.split("|");
-  const budget = rawBudget ? parseCurrencyInput(rawBudget) : 0;
-
-  return {
-    budget: Number.isFinite(budget) && budget > 0 ? budget : 0,
-    name: rawName.trim(),
-  };
-}
-
-function buildPhases(projectId: string, phasesText: string): Phase[] {
+function parsePhaseNames(phasesText: string) {
   const parsedPhases = phasesText
     .split("\n")
-    .map(parsePhaseLine)
-    .filter((phase) => phase.name);
-  const phaseRows = parsedPhases.length
-    ? parsedPhases
-    : defaultPhases.split("\n").map((name) => ({ budget: 0, name }));
+    .map((line) => line.trim())
+    .filter(Boolean);
 
-  return phaseRows.map((phase, index) => ({
-    id: `${projectId}-phase-${index + 1}`,
-    name: phase.name,
-    budget: phase.budget,
-  }));
+  return parsedPhases.length
+    ? parsedPhases
+    : defaultPhases.split("\n").map((line) => line.trim());
+}
+
+function buildPhases(
+  projectId: string,
+  phasesText: string,
+  phaseBudgets: Record<string, string>,
+  budgetMode: BudgetMode,
+): Phase[] {
+  const phaseNames = parsePhaseNames(phasesText);
+
+  return phaseNames.map((name, index) => {
+    const rawBudget = budgetMode === "byPhase" ? phaseBudgets[name] ?? "" : "";
+    const budget = parseCurrencyInput(rawBudget);
+
+    return {
+      id: `${projectId}-phase-${index + 1}`,
+      name,
+      budget: Number.isFinite(budget) && budget > 0 ? budget : 0,
+    };
+  });
 }
 
 function sumPhaseBudgets(phases: Phase[]) {
   return phases.reduce((total, phase) => total + phase.budget, 0);
+}
+
+function getBudgetMode(project: Project): BudgetMode {
+  if (project.phases.some((phase) => phase.budget > 0)) {
+    return "byPhase";
+  }
+
+  return project.budget > 0 ? "general" : "none";
+}
+
+function sumFormPhaseBudgets(phaseBudgets: Record<string, string>) {
+  return Object.values(phaseBudgets).reduce((total, rawValue) => {
+    const value = parseCurrencyInput(rawValue);
+
+    return total + (Number.isFinite(value) && value > 0 ? value : 0);
+  }, 0);
 }
 
 export function ProjectSelectionPage() {
@@ -105,6 +151,7 @@ export function ProjectSelectionPage() {
   const [deleteAcknowledged, setDeleteAcknowledged] = useState(false);
 
   const projectLimitReached = projects.length >= 10;
+  const formPhaseNames = useMemo(() => parsePhaseNames(form.phases), [form.phases]);
   const projectSpend = useMemo(() => {
     return projects.reduce<Record<string, number>>((acc, project) => {
       acc[project.id] = expenses
@@ -116,6 +163,15 @@ export function ProjectSelectionPage() {
 
   function updateForm(patch: Partial<ProjectForm>) {
     setForm((current) => ({ ...current, ...patch }));
+  }
+
+  function updateBudgetMode(budgetMode: BudgetMode) {
+    setForm((current) => ({
+      ...current,
+      budget: budgetMode === "general" ? current.budget : "",
+      budgetMode,
+      phaseBudgets: budgetMode === "byPhase" ? current.phaseBudgets : {},
+    }));
   }
 
   function resetCreateForm() {
@@ -141,7 +197,8 @@ export function ProjectSelectionPage() {
       address: project.address,
       owner: project.owner,
       investor: project.investor === "Nenhum" ? "" : project.investor,
-      budget: String(project.budget),
+      budget: project.budget ? String(project.budget) : "",
+      budgetMode: getBudgetMode(project),
       status: project.status,
       startDate: project.startDate,
       phases: project.phases.map((phase) => phase.name).join("\n"),
@@ -169,8 +226,11 @@ export function ProjectSelectionPage() {
       return;
     }
 
-    if (form.budget.trim() && (!Number.isFinite(explicitBudget) || explicitBudget < 0)) {
-      setFormError("Informe um orçamento válido ou deixe o campo em branco.");
+    if (
+      form.budgetMode === "general" &&
+      (!form.budget.trim() || !Number.isFinite(explicitBudget) || explicitBudget < 0)
+    ) {
+      setFormError("Informe um orçamento geral válido ou escolha outro modo de controle.");
       return;
     }
 
@@ -184,7 +244,10 @@ export function ProjectSelectionPage() {
 
           return {
             ...phase,
-            budget: Number.isFinite(phaseBudget) && phaseBudget > 0 ? phaseBudget : 0,
+            budget:
+              form.budgetMode === "byPhase" && Number.isFinite(phaseBudget) && phaseBudget > 0
+                ? phaseBudget
+                : 0,
           };
         }) ?? [];
       const fallbackBudget = sumPhaseBudgets(updatedPhases);
@@ -195,7 +258,12 @@ export function ProjectSelectionPage() {
         address: form.address.trim(),
         owner: form.owner.trim() || "Responsável não informado",
         investor,
-        budget: form.budget.trim() ? explicitBudget : fallbackBudget,
+        budget:
+          form.budgetMode === "general"
+            ? explicitBudget
+            : form.budgetMode === "byPhase"
+              ? fallbackBudget
+              : 0,
         phases: updatedPhases,
         status: form.status,
         startDate: form.startDate || new Date().toISOString().slice(0, 10),
@@ -206,7 +274,7 @@ export function ProjectSelectionPage() {
 
     const baseId = slugify(name) || "obra";
     const projectId = `project-${baseId}-${Date.now()}`;
-    const phases = buildPhases(projectId, form.phases);
+    const phases = buildPhases(projectId, form.phases, form.phaseBudgets, form.budgetMode);
     const fallbackBudget = sumPhaseBudgets(phases);
     const project: Project = {
       id: projectId,
@@ -215,7 +283,12 @@ export function ProjectSelectionPage() {
       address: form.address.trim(),
       owner: form.owner.trim() || "Responsável não informado",
       investor,
-      budget: form.budget.trim() ? explicitBudget : fallbackBudget,
+      budget:
+        form.budgetMode === "general"
+          ? explicitBudget
+          : form.budgetMode === "byPhase"
+            ? fallbackBudget
+            : 0,
       spent: 0,
       status: form.status,
       startDate: form.startDate || new Date().toISOString().slice(0, 10),
@@ -326,57 +399,156 @@ export function ProjectSelectionPage() {
             </FieldLabel>
           </div>
 
-          <div className="mt-3 grid gap-3 lg:grid-cols-[220px_1fr]">
-            <FieldLabel label="Orçamento previsto">
-              <Input
-                min="0"
-                step="0.01"
-                type="number"
-                value={form.budget}
-                onChange={(event) => updateForm({ budget: event.target.value })}
-                placeholder="Opcional"
-              />
-            </FieldLabel>
-            {!editingProjectId ? (
-              <FieldLabel label="Fases iniciais">
+          <div className="mt-5 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <section className="rounded-lg border border-blueprint-line bg-blueprint-surface/70 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-blueprint-ink">Fases da obra</h3>
+                  <p className="mt-1 text-sm text-blueprint-muted">
+                    Comece com as etapas principais. Cada linha vira uma fase para lançar despesas.
+                  </p>
+                </div>
+              </div>
+
+              {!editingProjectId ? (
                 <textarea
                   value={form.phases}
                   onChange={(event) => updateForm({ phases: event.target.value })}
-                  placeholder={"Fundação | 92000\nAlvenaria | 86500\nAcabamento"}
-                  className="min-h-24 rounded-md border border-blueprint-line bg-white px-3 py-2 text-sm text-blueprint-ink outline-none transition placeholder:text-slate-400 focus:border-blueprint-accent focus:ring-4 focus:ring-[#dceeff]"
+                  placeholder={"Fundação\nAlvenaria\nAcabamento"}
+                  className="mt-4 min-h-36 w-full rounded-md border border-blueprint-line bg-white px-3 py-2 text-sm text-blueprint-ink outline-none transition placeholder:text-slate-400 focus:border-blueprint-accent focus:ring-4 focus:ring-[#dceeff]"
                 />
-                <span className="text-xs font-normal text-blueprint-muted">
-                  Use uma fase por linha. O valor depois de | é opcional.
-                </span>
-              </FieldLabel>
-            ) : (
-              <div className="rounded-md border border-blueprint-line bg-blueprint-surface p-3">
-                <p className="text-sm font-medium text-blueprint-ink">Orçamento por fase</p>
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
+              ) : (
+                <div className="mt-4 grid gap-2">
                   {projects
                     .find((project) => project.id === editingProjectId)
                     ?.phases.map((phase) => (
-                      <FieldLabel key={phase.id} label={phase.name}>
-                        <Input
-                          min="0"
-                          step="0.01"
-                          type="number"
-                          value={form.phaseBudgets[phase.id] ?? ""}
-                          onChange={(event) =>
-                            updateForm({
-                              phaseBudgets: {
-                                ...form.phaseBudgets,
-                                [phase.id]: event.target.value,
-                              },
-                            })
-                          }
-                          placeholder="Sem orçamento"
-                        />
-                      </FieldLabel>
+                      <div
+                        key={phase.id}
+                        className="rounded-md border border-blueprint-line bg-white px-3 py-2 text-sm font-medium text-blueprint-ink"
+                      >
+                        {phase.name}
+                      </div>
                     ))}
                 </div>
+              )}
+            </section>
+
+            <section className="rounded-lg border border-blueprint-line bg-white p-4">
+              <h3 className="text-sm font-semibold text-blueprint-ink">Controle de orçamento</h3>
+              <p className="mt-1 text-sm text-blueprint-muted">
+                Escolha o nível de detalhe que a cliente tem hoje. Dá para mudar depois.
+              </p>
+
+              <div className="mt-4 grid gap-2">
+                {budgetModes.map((mode) => (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    onClick={() => updateBudgetMode(mode.value)}
+                    className={cn(
+                      "rounded-lg border px-4 py-3 text-left transition",
+                      form.budgetMode === mode.value
+                        ? "border-blueprint-accent bg-[#eef7ff] ring-2 ring-[#dceeff]"
+                        : "border-blueprint-line bg-white hover:border-blueprint-accent",
+                    )}
+                  >
+                    <span className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 items-center justify-center rounded-full border",
+                          form.budgetMode === mode.value
+                            ? "border-blueprint-accent bg-blueprint-accent"
+                            : "border-slate-300 bg-white",
+                        )}
+                      >
+                        {form.budgetMode === mode.value ? (
+                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                        ) : null}
+                      </span>
+                      <span className="text-sm font-semibold text-blueprint-ink">{mode.label}</span>
+                    </span>
+                    <span className="mt-1 block pl-7 text-sm text-blueprint-muted">
+                      {mode.description}
+                    </span>
+                  </button>
+                ))}
               </div>
-            )}
+
+              {form.budgetMode === "general" ? (
+                <div className="mt-4 rounded-md border border-blueprint-line bg-blueprint-surface px-3 py-3">
+                  <FieldLabel label="Valor total previsto">
+                    <Input
+                      inputMode="decimal"
+                      type="text"
+                      value={form.budget}
+                      onChange={(event) => updateForm({ budget: event.target.value })}
+                      placeholder="Ex: 250000"
+                    />
+                  </FieldLabel>
+                </div>
+              ) : null}
+
+              {form.budgetMode === "byPhase" ? (
+                <div className="mt-4 rounded-md border border-blueprint-line bg-blueprint-surface p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-blueprint-ink">
+                        Distribuição por fase
+                      </p>
+                      <p className="mt-1 text-xs text-blueprint-muted">
+                        Preencha apenas as fases que já têm previsão. Campos em branco ficam sem
+                        orçamento.
+                      </p>
+                    </div>
+                    <Badge tone="gray">
+                      Total {formatCurrency(sumFormPhaseBudgets(form.phaseBudgets))}
+                    </Badge>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {editingProjectId
+                      ? projects
+                          .find((project) => project.id === editingProjectId)
+                          ?.phases.map((phase) => (
+                            <FieldLabel key={phase.id} label={phase.name}>
+                              <Input
+                                inputMode="decimal"
+                                type="text"
+                                value={form.phaseBudgets[phase.id] ?? ""}
+                                onChange={(event) =>
+                                  updateForm({
+                                    phaseBudgets: {
+                                      ...form.phaseBudgets,
+                                      [phase.id]: event.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="Sem orçamento"
+                              />
+                            </FieldLabel>
+                          ))
+                      : formPhaseNames.map((phaseName) => (
+                          <FieldLabel key={phaseName} label={phaseName}>
+                            <Input
+                              inputMode="decimal"
+                              type="text"
+                              value={form.phaseBudgets[phaseName] ?? ""}
+                              onChange={(event) =>
+                                updateForm({
+                                  phaseBudgets: {
+                                    ...form.phaseBudgets,
+                                    [phaseName]: event.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Sem orçamento"
+                            />
+                          </FieldLabel>
+                        ))}
+                  </div>
+                </div>
+              ) : null}
+            </section>
           </div>
 
           {formError ? (
