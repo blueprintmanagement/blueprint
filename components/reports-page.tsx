@@ -64,7 +64,7 @@ export function ReportsPage() {
             Dossiê mensal - {activeProject.name}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-blueprint-muted">
-            Fechamento da obra aberta com planilha automática e lista de pendências antes do envio ao contador.
+            Fechamento do empreendimento aberto com planilha automática e lista de pendências antes do envio ao contador.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">

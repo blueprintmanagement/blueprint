@@ -2,7 +2,6 @@ import * as XLSX from "xlsx-js-style";
 import {
   Expense,
   Project,
-  projects,
   Supplier,
   suppliers as initialSuppliers,
 } from "@/lib/mock-data";
@@ -27,18 +26,6 @@ const colors = {
 
 const moneyFormat = '"R$" #,##0.00';
 const dateFormat = "dd/mm/yyyy";
-
-function getProjectName(project: Project, projectId: string) {
-  if (project.id === projectId) {
-    return project.name;
-  }
-
-  return projects.find((item) => item.id === projectId)?.name ?? "";
-}
-
-function getPhaseName(project: Project, phaseId: string) {
-  return project.phases.find((phase) => phase.id === phaseId)?.name ?? "";
-}
 
 function getSupplier(supplierId: string, suppliers: Supplier[]) {
   return suppliers.find((supplier) => supplier.id === supplierId);
@@ -163,19 +150,12 @@ function buildCompleteRows({
 
     return [
       index + 1,
-      expense.id,
       parseDate(expense.purchaseDate),
       parseDate(expense.invoicePaymentDate),
       parseDate(expense.storePaymentDate),
       expense.invoiceNumber ?? "",
-      getProjectName(project, expense.projectId),
-      getPhaseName(project, expense.phaseId),
       displayText(expense.description),
-      expense.catalogItemId,
       supplier?.name ?? "",
-      supplier?.document ? displayText(supplier.document) : "",
-      supplier?.contact ?? "",
-      supplier?.bankInfo ?? "",
       displayText(expense.type),
       expense.quantity,
       expense.unitValue,
@@ -208,10 +188,10 @@ function styleDossierSheet({
     setCellStyle(sheet, getCellAddress(headerRowIndex, col), headerStyle);
   }
 
-  const dateCols = [2, 3, 4];
-  const moneyCols = [16, 17];
-  const numericCols = [0, 15];
-  const statusCols = [19, 20, 21, 26];
+  const dateCols = [1, 2, 3];
+  const moneyCols = [9, 10];
+  const numericCols = [0, 8];
+  const statusCols = [12, 13, 14, 19];
 
   for (let row = headerRowIndex + 1; row < headerRowIndex + rowCount + 1; row += 1) {
     for (let col = 0; col < colCount; col += 1) {
@@ -234,7 +214,7 @@ function styleDossierSheet({
           alignment: { horizontal: "right", vertical: "center" },
         };
       } else {
-        cell.s = col === 1 || col === 9 ? mutedStyle : bodyStyle;
+        cell.s = bodyStyle;
       }
     }
   }
@@ -274,19 +254,12 @@ function exportDossierWorkbook({
 
   const columns = [
     "#",
-    "ID Lançamento",
     "Data da Compra",
     "Data Pgto Fatura",
     "Data Pgto Loja",
     "Nota Fiscal",
-    "Obra",
-    "Fase",
     "Ref / Insumo / Serviço",
-    "ID Catálogo",
     "Fornecedor",
-    "CNPJ/CPF",
-    "Contato Fornecedor",
-    "Dados Bancários",
     "Tipo",
     "Quantidade",
     "Valor Uni",
@@ -305,9 +278,9 @@ function exportDossierWorkbook({
     ["Blueprint", ...Array(columns.length - 1).fill("")],
     ["Dossiê completo de despesas", ...Array(columns.length - 1).fill("")],
     [],
-    ["Obra", project.name, "Período", periodLabel, "Investidor", project.investor, "Responsável", project.owner],
+    ["Empreendimento", project.name, "Período", periodLabel, "Investidor", project.investor, "Responsável", project.owner],
     ["Total Lançado", total, "Pago", paid, "Pendente", pending, "Lançamentos", filteredExpenses.length],
-    ["Sem Comprovante", missingAttachments, "Não Enviado", notSent, "Gerado em", new Date(), "Status Obra", project.status],
+    ["Sem Comprovante", missingAttachments, "Não Enviado", notSent, "Gerado em", new Date(), "Status Empreendimento", project.status],
     [],
     ["Observação", "Esta aba consolida todos os lançamentos do período, um por linha, com todos os dados necessários para contador e investidor."],
     [],
@@ -320,7 +293,7 @@ function exportDossierWorkbook({
 
   workbook.Props = {
     Title: `Blueprint - Dossiê Completo ${project.name} ${periodLabel}`,
-    Subject: "Dossiê completo de despesas de obra",
+    Subject: "Dossiê completo de despesas do empreendimento",
     Author: "Blueprint",
     CreatedDate: new Date(),
   };
@@ -332,19 +305,12 @@ function exportDossierWorkbook({
   ];
   sheet["!cols"] = [
     { wch: 6 },
-    { wch: 18 },
     { wch: 15 },
     { wch: 18 },
     { wch: 16 },
     { wch: 12 },
-    { wch: 24 },
-    { wch: 26 },
     { wch: 34 },
-    { wch: 18 },
     { wch: 28 },
-    { wch: 18 },
-    { wch: 22 },
-    { wch: 22 },
     { wch: 14 },
     { wch: 12 },
     { wch: 12 },
@@ -436,8 +402,8 @@ export function exportCompleteWorkbook({
 }) {
   exportDossierWorkbook({
     expenses,
-    fileSuffix: "Todos os mêses",
-    periodLabel: "Todos os mêses",
+    fileSuffix: "Todos os meses",
+    periodLabel: "Todos os meses",
     project,
     suppliers,
   });

@@ -37,6 +37,7 @@ export function ProjectDashboard() {
   const usedPercent = hasProjectBudget
     ? Math.round((spentTotal / activeProject.budget) * 100)
     : 0;
+  const unitTotal = activeProject.unitCount ?? activeProject.units?.length ?? 0;
 
   const phaseRows = activeProject.phases.map((phase) => {
     const total = projectExpenses
@@ -57,7 +58,7 @@ export function ProjectDashboard() {
         <div className="grid gap-5 p-5 xl:grid-cols-[1fr_320px]">
           <div className="flex flex-col justify-between">
             <div>
-              <span className="blueprint-kicker">Obra aberta</span>
+              <span className="blueprint-kicker">Empreendimento aberto</span>
               <h1 className="mt-3 text-3xl font-semibold text-blueprint-ink">
                 {activeProject.name}
               </h1>
@@ -65,6 +66,11 @@ export function ProjectDashboard() {
                 {activeProject.address} - início em {formatDate(activeProject.startDate)} -
                 investidor {activeProject.investor}
               </p>
+              {activeProject.description ? (
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-blueprint-ink">
+                  {activeProject.description}
+                </p>
+              ) : null}
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               <Link
@@ -72,7 +78,7 @@ export function ProjectDashboard() {
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-blueprint-line bg-white/90 px-4 text-sm font-medium text-blueprint-ink shadow-sm transition hover:border-blueprint-accent hover:bg-[#eef7ff]"
               >
                 <Building2 className="h-4 w-4" />
-                Trocar obra
+                Trocar empreendimento
               </Link>
               <Link
                 href="/despesas"
@@ -109,6 +115,36 @@ export function ProjectDashboard() {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-4">
+        {[
+          {
+            label: "Terreno",
+            value: activeProject.landValue ? formatCurrency(activeProject.landValue) : "Não informado",
+          },
+          {
+            label: "Metragem",
+            value: activeProject.constructionArea
+              ? `${activeProject.constructionArea} m²`
+              : "Não informada",
+          },
+          {
+            label: "Unidades",
+            value: unitTotal ? String(unitTotal) : "Sem unidades",
+          },
+          {
+            label: "Entrega prevista",
+            value: activeProject.expectedDeliveryDate
+              ? formatDate(activeProject.expectedDeliveryDate)
+              : "Não definida",
+          },
+        ].map((item) => (
+          <article key={item.label} className="blueprint-panel rounded-lg p-4">
+            <p className="text-sm text-blueprint-muted">{item.label}</p>
+            <p className="mt-2 text-lg font-semibold text-blueprint-ink">{item.value}</p>
+          </article>
+        ))}
       </section>
 
       <section className="grid gap-3 md:grid-cols-4">

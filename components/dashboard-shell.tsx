@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, helper: "Resumo" },
   { name: "Despesas", href: "/despesas", icon: ReceiptText, helper: "Lançamentos" },
-  { name: "Obras", href: "/obras", icon: Building2, helper: "Selecionar" },
+  { name: "Empreendimentos", href: "/obras", icon: Building2, helper: "Selecionar" },
   { name: "Fornecedores", href: "/fornecedores", icon: Truck, helper: "Base" },
   { name: "Catálogo", href: "/catalogo", icon: PackageSearch, helper: "Itens" },
   { name: "Relatórios", href: "/relatorios", icon: FileBarChart2, helper: "Dossiê" },
@@ -42,7 +42,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="mt-6 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-[0.06em] text-blueprint-muted">
-              Obra aberta
+              Empreendimento aberto
             </span>
             <ChevronDown className="h-4 w-4 text-blueprint-muted" />
           </div>
@@ -50,7 +50,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             className="mt-2 border-[#c9d8e8] bg-white text-blueprint-ink"
             value={activeProjectId}
             onChange={(event) => setActiveProjectId(event.target.value)}
-            aria-label="Selecionar obra ativa"
+            aria-label="Selecionar empreendimento ativo"
           >
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
@@ -107,7 +107,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               className="h-9 max-w-[180px]"
               value={activeProjectId}
               onChange={(event) => setActiveProjectId(event.target.value)}
-              aria-label="Selecionar obra ativa"
+              aria-label="Selecionar empreendimento ativo"
             >
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>

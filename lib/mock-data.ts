@@ -1,7 +1,7 @@
 export type ExpenseType = "Material" | "Mão de Obra" | "Serviço" | "Equipamento";
 export type PaymentMethod = "PIX" | "Boleto" | "Cartão" | "A Prazo";
 export type ExpenseStatus = "Pago" | "Pendente";
-export type ProjectStatus = "Em andamento" | "Planejada" | "Pausada";
+export type ProjectStatus = "Planejamento" | "Obra" | "Pronto" | "Entregue";
 
 export type Phase = {
   id: string;
@@ -9,17 +9,37 @@ export type Phase = {
   budget: number;
 };
 
+export type ProjectUnit = {
+  id: string;
+  identification: string;
+  privateArea: number;
+  commonArea: number;
+  totalArea: number;
+};
+
 export type Project = {
   id: string;
   name: string;
   shortName: string;
   address: string;
+  description?: string;
   owner: string;
   investor: string;
   budget: number;
   spent: number;
   status: ProjectStatus;
+  isActive?: boolean;
   startDate: string;
+  landValue?: number;
+  acquisitionDate?: string;
+  plannedCostPerSquareMeter?: number;
+  laborCostPerSquareMeter?: number;
+  constructionArea?: number;
+  taxRate?: number;
+  unitCount?: number;
+  units?: ProjectUnit[];
+  durationMonths?: number;
+  expectedDeliveryDate?: string;
   phases: Phase[];
 };
 
@@ -71,12 +91,32 @@ export const projects: Project[] = [
     name: "Vivaldino Mendes",
     shortName: "Vivaldino",
     address: "Obra residencial - Vivaldino Mendes",
+    description: "Empreendimento residencial usado como base para organizar despesas, comprovantes e fechamento mensal.",
     owner: "Dona da obra",
     investor: "Delmar",
     budget: 411332.4,
     spent: 141005.29,
-    status: "Em andamento",
+    status: "Obra",
+    isActive: true,
     startDate: "2026-03-02",
+    landValue: 135000,
+    acquisitionDate: "2026-02-20",
+    plannedCostPerSquareMeter: 2450,
+    laborCostPerSquareMeter: 680,
+    constructionArea: 167.89,
+    taxRate: 4,
+    unitCount: 1,
+    units: [
+      {
+        id: "vivaldino-unidade-1",
+        identification: "Casa principal",
+        privateArea: 145,
+        commonArea: 22.89,
+        totalArea: 167.89,
+      },
+    ],
+    durationMonths: 10,
+    expectedDeliveryDate: "2026-12-20",
     phases: [
       { id: "vivaldino-terreno", name: "Terreno e terraplanagem", budget: 18000 },
       { id: "vivaldino-fundação", name: "Fundação", budget: 92000 },
@@ -91,12 +131,30 @@ export const projects: Project[] = [
     name: "Edificio Alpha",
     shortName: "Alpha",
     address: "Rua das Palmeiras, 184 - Belo Horizonte",
+    description: "Empreendimento multifamiliar em fase de execução estrutural.",
     owner: "Marina Duarte",
     investor: "Grupo MD",
     budget: 720000,
     spent: 284600,
-    status: "Em andamento",
+    status: "Obra",
+    isActive: true,
     startDate: "2026-02-12",
+    landValue: 260000,
+    acquisitionDate: "2026-01-10",
+    plannedCostPerSquareMeter: 3200,
+    laborCostPerSquareMeter: 920,
+    constructionArea: 225,
+    taxRate: 6,
+    unitCount: 6,
+    units: Array.from({ length: 6 }, (_, index) => ({
+      id: `alpha-unidade-${index + 1}`,
+      identification: `Apto ${index + 1}`,
+      privateArea: 58,
+      commonArea: 8,
+      totalArea: 66,
+    })),
+    durationMonths: 14,
+    expectedDeliveryDate: "2027-04-12",
     phases: [
       { id: "alpha-fundação", name: "Fundação", budget: 180000 },
       { id: "alpha-alvenaria", name: "Alvenaria", budget: 240000 },
@@ -108,12 +166,30 @@ export const projects: Project[] = [
     name: "Residencial Vila Serena",
     shortName: "Serena",
     address: "Av. Central, 902 - Contagem",
+    description: "Conjunto de sobrados planejado para venda por unidade.",
     owner: "Carolina Reis",
     investor: "Familia Reis",
     budget: 485000,
     spent: 191240,
-    status: "Planejada",
+    status: "Planejamento",
+    isActive: true,
     startDate: "2026-06-01",
+    landValue: 190000,
+    acquisitionDate: "2026-05-08",
+    plannedCostPerSquareMeter: 2850,
+    laborCostPerSquareMeter: 760,
+    constructionArea: 170.18,
+    taxRate: 4,
+    unitCount: 4,
+    units: Array.from({ length: 4 }, (_, index) => ({
+      id: `serena-sobrado-${index + 1}`,
+      identification: `Sobrado ${index + 1}`,
+      privateArea: 82,
+      commonArea: 5,
+      totalArea: 87,
+    })),
+    durationMonths: 12,
+    expectedDeliveryDate: "2027-06-01",
     phases: [
       { id: "serena-terraplanagem", name: "Terraplanagem", budget: 42000 },
       { id: "serena-estrutura", name: "Estrutura", budget: 210000 },
