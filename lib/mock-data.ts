@@ -2,6 +2,7 @@ export type ExpenseType = "Material" | "Mão de Obra" | "Serviço" | "Equipament
 export type PaymentMethod = "PIX" | "Boleto" | "Cartão" | "A Prazo";
 export type ExpenseStatus = "Pago" | "Pendente";
 export type ProjectStatus = "Planejamento" | "Obra" | "Pronto" | "Entregue";
+export type AgendaEntryType = "Lembrete" | "Anotação" | "Mudança de fase" | "Outro";
 
 export type Phase = {
   id: string;
@@ -83,6 +84,17 @@ export type Expense = {
   attachmentName?: string;
   attachmentSize?: number;
   attachmentType?: string;
+};
+
+export type AgendaEntry = {
+  id: string;
+  projectId: string;
+  date: string;
+  type: AgendaEntryType;
+  title: string;
+  description?: string;
+  phaseId?: string;
+  createdAt: string;
 };
 
 export const projects: Project[] = [
@@ -195,6 +207,28 @@ export const projects: Project[] = [
       { id: "serena-estrutura", name: "Estrutura", budget: 210000 },
       { id: "serena-instalacoes", name: "Instalações", budget: 128000 },
     ],
+  },
+];
+
+export const agendaEntries: AgendaEntry[] = [
+  {
+    id: "agenda-viv-reuniao-contador",
+    projectId: "project-vivaldino",
+    date: "2026-03-28",
+    type: "Lembrete",
+    title: "Separar comprovantes do fechamento",
+    description: "Conferir despesas sem anexo antes de exportar o dossiê mensal.",
+    createdAt: "2026-03-20T12:00:00.000Z",
+  },
+  {
+    id: "agenda-viv-fase-estrutura",
+    projectId: "project-vivaldino",
+    date: "2026-03-04",
+    type: "Mudança de fase",
+    title: "Início da fase de Estrutura",
+    description: "Equipe iniciou preparação de ferragens e formas.",
+    phaseId: "vivaldino-estrutura",
+    createdAt: "2026-03-04T12:00:00.000Z",
   },
 ];
 

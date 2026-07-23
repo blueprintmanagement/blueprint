@@ -8,9 +8,11 @@ import {
   useState,
 } from "react";
 import {
+  AgendaEntry,
   CatalogItem,
   Expense,
   Supplier,
+  agendaEntries as initialAgendaEntries,
   expenses as initialExpenses,
   catalogItems as initialCatalogItems,
   suppliers as initialSuppliers,
@@ -24,8 +26,11 @@ type ProjectContextValue = {
   projects: Project[];
   expenses: Expense[];
   projectExpenses: Expense[];
+  agendaEntries: AgendaEntry[];
   catalogItems: CatalogItem[];
   suppliers: Supplier[];
+  addAgendaEntry: (entry: AgendaEntry) => void;
+  deleteAgendaEntry: (entryId: string) => void;
   addProject: (project: Project) => void;
   updateProject: (projectId: string, patch: Partial<Project>) => void;
   deleteProject: (projectId: string) => void;
@@ -46,6 +51,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [activeProjectId, setActiveProjectIdState] = useState(initialProjects[0].id);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [agendaEntries, setAgendaEntries] = useState<AgendaEntry[]>(initialAgendaEntries);
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>(initialCatalogItems);
   const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
 
@@ -53,6 +59,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     const savedProject = window.localStorage.getItem("blueprint.activeProjectId");
     const savedProjects = window.localStorage.getItem("blueprint.projects");
     const savedExpenses = window.localStorage.getItem("blueprint.expenses");
+    const savedAgendaEntries = window.localStorage.getItem("blueprint.agendaEntries");
     const savedCatalogItems = window.localStorage.getItem("blueprint.catalogItems");
     const savedSuppliers = window.localStorage.getItem("blueprint.suppliers");
 
@@ -77,6 +84,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         setExpenses(JSON.parse(savedExpenses) as Expense[]);
       } catch {
         setExpenses(initialExpenses);
+      }
+    }
+
+    if (savedAgendaEntries) {
+      try {
+        setAgendaEntries(JSON.parse(savedAgendaEntries) as AgendaEntry[]);
+      } catch {
+        setAgendaEntries(initialAgendaEntries);
       }
     }
 
@@ -108,6 +123,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     window.localStorage.setItem("blueprint.expenses", JSON.stringify(expenses));
   }, [expenses]);
+
+  useEffect(() => {
+    window.localStorage.setItem("blueprint.agendaEntries", JSON.stringify(agendaEntries));
+  }, [agendaEntries]);
 
   useEffect(() => {
     window.localStorage.setItem("blueprint.catalogItems", JSON.stringify(catalogItems));
@@ -199,6 +218,16 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
+  function addAgendaEntry(entry: AgendaEntry) {
+    setAgendaEntries((currentEntries) => [entry, ...currentEntries]);
+  }
+
+  function deleteAgendaEntry(entryId: string) {
+    setAgendaEntries((currentEntries) =>
+      currentEntries.filter((entry) => entry.id !== entryId),
+    );
+  }
+
   function addCatalogItem(item: CatalogItem) {
     setCatalogItems((currentItems) => {
       const exists = currentItems.some(
@@ -254,17 +283,20 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       value={{
         activeProject,
         activeProjectId,
+        addAgendaEntry,
         addProject,
         updateProject,
         deleteProject,
         addExpense,
         updateExpense,
         deleteExpense,
+        deleteAgendaEntry,
         addCatalogItem,
         updateCatalogItem,
         deleteCatalogItem,
         addSupplier,
         updateSupplier,
+        agendaEntries,
         catalogItems,
         expenses,
         projects,

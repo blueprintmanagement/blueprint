@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Building2,
+  CalendarDays,
   ChevronDown,
   FileBarChart2,
   LayoutDashboard,
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, helper: "Resumo" },
   { name: "Despesas", href: "/despesas", icon: ReceiptText, helper: "Lançamentos" },
+  { name: "Agenda", href: "/agenda", icon: CalendarDays, helper: "Prazos" },
   { name: "Empreendimentos", href: "/obras", icon: Building2, helper: "Selecionar" },
   { name: "Fornecedores", href: "/fornecedores", icon: Truck, helper: "Base" },
   { name: "Catálogo", href: "/catalogo", icon: PackageSearch, helper: "Itens" },
