@@ -14,6 +14,7 @@ import {
   Plus,
   ReceiptText,
   Trash2,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,16 @@ const eventIcons: Record<AgendaEventKind, React.ElementType> = {
 };
 
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const monthOptions = Array.from({ length: 12 }, (_, index) => {
+  const value = String(index + 1).padStart(2, "0");
+
+  return {
+    label: new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(
+      new Date(`2026-${value}-02T12:00:00`),
+    ),
+    value,
+  };
+});
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -123,6 +134,15 @@ function getAvailableMonths(events: AgendaEvent[]) {
       label: formatMonth(value),
       value,
     }));
+}
+
+function getYearOptions(events: AgendaEvent[], today: string) {
+  const currentYear = Number(today.slice(0, 4));
+  const years = new Set<number>([currentYear - 1, currentYear, currentYear + 1]);
+
+  events.forEach((event) => years.add(Number(event.date.slice(0, 4))));
+
+  return Array.from(years).sort((a, b) => a - b);
 }
 
 function groupEventsByDate(events: AgendaEvent[]) {
@@ -338,6 +358,7 @@ export function AgendaPage() {
     () => Array.from(new Set(allEvents.map((event) => event.kind))).sort(),
     [allEvents],
   );
+  const yearOptions = useMemo(() => getYearOptions(allEvents, today), [allEvents, today]);
   const filteredEvents = useMemo(() => {
     return allEvents
       .filter((event) => projectFilter === "all" || event.projectId === projectFilter)
@@ -623,9 +644,11 @@ export function AgendaPage() {
           <AgendaCalendarView
             calendarEventsByDate={calendarEventsByDate}
             calendarMonth={calendarMonth}
+            deleteAgendaEntry={deleteAgendaEntry}
             days={calendarDays}
             onMonthChange={setCalendarMonth}
             today={today}
+            yearOptions={yearOptions}
           />
         )}
       </section>
@@ -670,16 +693,37 @@ function AgendaListView({
 function AgendaCalendarView({
   calendarEventsByDate,
   calendarMonth,
+  deleteAgendaEntry,
   days,
   onMonthChange,
   today,
+  yearOptions,
 }: {
   calendarEventsByDate: Record<string, AgendaEvent[]>;
   calendarMonth: string;
+  deleteAgendaEntry: (entryId: string) => void;
   days: Array<{ date: string; day: number; inMonth: boolean }>;
   onMonthChange: (month: string) => void;
   today: string;
+  yearOptions: number[];
 }) {
+  const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
+  const selectedYear = calendarMonth.slice(0, 4);
+  const selectedMonth = calendarMonth.slice(5, 7);
+
+  function updateCalendarPart(part: "month" | "year", value: string) {
+    onMonthChange(part === "month" ? `${selectedYear}-${value}` : `${value}-${selectedMonth}`);
+  }
+
+  function deleteSelectedEvent() {
+    if (!selectedEvent || selectedEvent.source !== "Manual") {
+      return;
+    }
+
+    deleteAgendaEntry(selectedEvent.id);
+    setSelectedEvent(null);
+  }
+
   return (
     <div>
       <div className="flex flex-col gap-3 border-b border-blueprint-line px-5 py-4 md:flex-row md:items-center md:justify-between">
@@ -688,7 +732,31 @@ function AgendaCalendarView({
             {formatMonth(calendarMonth)}
           </h2>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Select
+            className="h-9 w-[150px] capitalize"
+            value={selectedMonth}
+            onChange={(event) => updateCalendarPart("month", event.target.value)}
+            aria-label="Selecionar mês do calendário"
+          >
+            {monthOptions.map((month) => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            className="h-9 w-[105px]"
+            value={selectedYear}
+            onChange={(event) => updateCalendarPart("year", event.target.value)}
+            aria-label="Selecionar ano do calendário"
+          >
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </Select>
           <Button
             type="button"
             variant="secondary"
@@ -760,10 +828,12 @@ function AgendaCalendarView({
 
                   <div className="mt-2 space-y-1.5">
                     {events.slice(0, 3).map((event) => (
-                      <div
+                      <button
                         key={event.id}
+                        type="button"
+                        onClick={() => setSelectedEvent(event)}
                         className={cn(
-                          "rounded-md border px-2 py-1 text-xs leading-4",
+                          "w-full rounded-md border px-2 py-1 text-left text-xs leading-4 transition hover:border-blueprint-accent hover:shadow-sm",
                           event.source === "Manual"
                             ? "border-[#d7dcff] bg-[#f4f6ff] text-[#4554a6]"
                             : "border-blueprint-line bg-white text-blueprint-ink",
@@ -772,12 +842,16 @@ function AgendaCalendarView({
                       >
                         <p className="truncate font-medium">{event.title}</p>
                         <p className="truncate text-[0.68rem] opacity-75">{event.kind}</p>
-                      </div>
+                      </button>
                     ))}
                     {events.length > 3 ? (
-                      <p className="text-xs font-medium text-blueprint-muted">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEvent(events[3])}
+                        className="text-left text-xs font-medium text-blueprint-muted transition hover:text-blueprint-accent"
+                      >
                         +{events.length - 3} registro(s)
-                      </p>
+                      </button>
                     ) : null}
                   </div>
                 </div>
@@ -786,6 +860,75 @@ function AgendaCalendarView({
           </div>
         </div>
       </div>
+
+      {selectedEvent ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#061c3d]/38 px-4 backdrop-blur-sm">
+          <section className="w-full max-w-xl rounded-lg border border-blueprint-line bg-white p-5 shadow-lift">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={selectedEvent.tone}>{selectedEvent.kind}</Badge>
+                  <Badge tone={selectedEvent.source === "Manual" ? "violet" : "gray"}>
+                    {selectedEvent.source}
+                  </Badge>
+                </div>
+                <h2 className="mt-3 text-xl font-semibold text-blueprint-ink">
+                  {selectedEvent.title}
+                </h2>
+                <p className="mt-1 text-sm text-blueprint-muted">
+                  {formatDate(selectedEvent.date)} - {selectedEvent.projectName}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 px-2"
+                onClick={() => setSelectedEvent(null)}
+                aria-label="Fechar detalhes"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="mt-5 rounded-md border border-blueprint-line bg-blueprint-surface/70 px-3 py-3">
+              <p className="text-sm leading-6 text-blueprint-ink">{selectedEvent.description}</p>
+            </div>
+
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-blueprint-muted">Empreendimento</dt>
+                <dd className="mt-1 font-medium text-blueprint-ink">{selectedEvent.projectName}</dd>
+              </div>
+              <div>
+                <dt className="text-blueprint-muted">Origem</dt>
+                <dd className="mt-1 font-medium text-blueprint-ink">{selectedEvent.source}</dd>
+              </div>
+              {selectedEvent.phaseName ? (
+                <div>
+                  <dt className="text-blueprint-muted">Fase</dt>
+                  <dd className="mt-1 font-medium text-blueprint-ink">{selectedEvent.phaseName}</dd>
+                </div>
+              ) : null}
+            </dl>
+
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="secondary" onClick={() => setSelectedEvent(null)}>
+                Fechar
+              </Button>
+              {selectedEvent.source === "Manual" ? (
+                <Button
+                  type="button"
+                  className="bg-red-700 hover:bg-red-800"
+                  onClick={deleteSelectedEvent}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir registro
+                </Button>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
