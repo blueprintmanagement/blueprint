@@ -455,10 +455,6 @@ export function AgendaPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-blueprint-ink">Novo registro manual</h2>
-              <p className="mt-1 text-sm text-blueprint-muted">
-                Escolha o tipo primeiro. O formulário mostra apenas os campos úteis para aquele
-                registro.
-              </p>
             </div>
             <Button
               type="button"
@@ -691,9 +687,6 @@ function AgendaCalendarView({
           <h2 className="text-base font-semibold capitalize text-blueprint-ink">
             {formatMonth(calendarMonth)}
           </h2>
-          <p className="mt-1 text-sm text-blueprint-muted">
-            Dias com registros aparecem destacados. Dias passados ficam mais discretos.
-          </p>
         </div>
         <div className="flex gap-2">
           <Button
