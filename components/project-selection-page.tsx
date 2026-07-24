@@ -364,7 +364,7 @@ export function ProjectSelectionPage() {
     setFormError("");
   }
 
-  function submitProject(event: FormEvent<HTMLFormElement>) {
+  async function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!editingProjectId && projectLimitReached) {
@@ -420,7 +420,8 @@ export function ProjectSelectionPage() {
         }) ?? [];
       const fallbackBudget = sumPhaseBudgets(updatedPhases);
 
-      updateProject(editingProjectId, {
+      try {
+        await updateProject(editingProjectId, {
         name,
         shortName: form.shortName.trim(),
         address: form.address.trim(),
@@ -437,8 +438,11 @@ export function ProjectSelectionPage() {
         ...projectDetails,
         status: form.status,
         startDate: form.startDate || new Date().toISOString().slice(0, 10),
-      });
-      resetCreateForm();
+        });
+        resetCreateForm();
+      } catch {
+        setFormError("Não foi possível salvar o empreendimento agora. Tente novamente.");
+      }
       return;
     }
 
@@ -467,8 +471,12 @@ export function ProjectSelectionPage() {
       phases,
     };
 
-    addProject(project);
-    resetCreateForm();
+    try {
+      await addProject(project);
+      resetCreateForm();
+    } catch {
+      setFormError("Não foi possível criar o empreendimento agora. Tente novamente.");
+    }
   }
 
   function openDelete(project: Project) {
@@ -483,13 +491,17 @@ export function ProjectSelectionPage() {
     setDeleteAcknowledged(false);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!projectToDelete || deleteName !== projectToDelete.name || !deleteAcknowledged) {
       return;
     }
 
-    deleteProject(projectToDelete.id);
-    closeDelete();
+    try {
+      await deleteProject(projectToDelete.id);
+      closeDelete();
+    } catch {
+      setFormError("Não foi possível excluir o empreendimento. Revise vínculos pendentes e tente novamente.");
+    }
   }
 
   return (
@@ -1049,7 +1061,7 @@ export function ProjectSelectionPage() {
                   Excluir {projectToDelete.name}?
                 </h2>
                 <p className="mt-2 text-sm text-blueprint-muted">
-                  Esta ação remove o empreendimento e todos os lançamentos ligados a ele deste protótipo local. Para confirmar, digite o nome exato.
+                  Esta ação remove o empreendimento e todos os lançamentos ligados a ele. Para confirmar, digite o nome exato.
                 </p>
               </div>
               <Button type="button" variant="ghost" className="h-9 px-2" onClick={closeDelete}>
@@ -1072,7 +1084,7 @@ export function ProjectSelectionPage() {
                   checked={deleteAcknowledged}
                   onChange={(event) => setDeleteAcknowledged(event.target.checked)}
                 />
-                Entendo que as despesas deste empreendimento serão removidas do ambiente local de testes.
+                Entendo que as despesas deste empreendimento serão removidas do Blueprint.
               </label>
             </div>
 

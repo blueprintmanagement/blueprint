@@ -8,13 +8,17 @@ import {
   ChevronDown,
   FileBarChart2,
   LayoutDashboard,
+  LogOut,
   PackageSearch,
   ReceiptText,
   Truck,
 } from "lucide-react";
 import { Select } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
 import { useProject } from "@/components/project-context";
+import { useAuth } from "@/components/auth-context";
 import { BrandLogo } from "@/components/brand-logo";
+import { ProjectSelectionPage } from "@/components/project-selection-page";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -29,7 +33,58 @@ const navigation = [
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { activeProject, activeProjectId, projects, setActiveProjectId } = useProject();
+  const { activeOrganizationId, memberships, signOut, user } = useAuth();
+  const { activeProject, activeProjectId, isCloudMode, isSyncing, projects, setActiveProjectId } = useProject();
+  const activeOrganization = memberships.find((membership) => membership.organization_id === activeOrganizationId)?.organizations;
+
+  if (isCloudMode && isSyncing && projects.length === 0) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-blueprint-paper px-4">
+        <div className="blueprint-panel rounded-lg p-6 text-sm text-blueprint-muted shadow-soft">
+          Carregando sua empresa...
+        </div>
+      </main>
+    );
+  }
+
+  if (isCloudMode && projects.length === 0) {
+    return (
+      <div className="min-h-screen">
+        <aside className="blueprint-rail fixed inset-y-0 left-0 hidden w-72 border-r border-white/70 px-4 py-5 text-blueprint-ink shadow-[12px_0_34px_rgba(6,28,61,0.06)] lg:block">
+          <Link
+            href="/"
+            className="block rounded-lg border border-white/80 bg-white/86 px-3 py-3 shadow-sm transition hover:shadow-soft"
+          >
+            <BrandLogo />
+          </Link>
+          {user ? (
+            <div className="absolute bottom-5 left-4 right-4 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
+              <p className="truncate text-xs font-semibold uppercase tracking-[0.06em] text-blueprint-muted">
+                {activeOrganization?.name ?? "Organização"}
+              </p>
+              <p className="mt-1 truncate text-sm font-medium text-blueprint-ink">{user.email}</p>
+              <Button type="button" variant="secondary" className="mt-3 h-9 w-full justify-start" onClick={() => void signOut()}>
+                <LogOut className="h-4 w-4" />
+                Sair
+              </Button>
+            </div>
+          ) : null}
+        </aside>
+
+        <div className="lg:pl-72">
+          <header className="sticky top-0 z-20 border-b border-blueprint-line bg-white/86 px-4 py-3 backdrop-blur-xl lg:hidden">
+            <Link href="/" className="flex items-center gap-2 font-semibold text-blueprint-ink">
+              <BrandLogo compact />
+              <span className="text-sm font-black tracking-[0.08em]">BLUEPRINT</span>
+            </Link>
+          </header>
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
+            <ProjectSelectionPage />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -96,6 +151,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        {user ? (
+          <div className="absolute bottom-5 left-4 right-4 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
+            <p className="truncate text-xs font-semibold uppercase tracking-[0.06em] text-blueprint-muted">
+              {activeOrganization?.name ?? "Organização"}
+            </p>
+            <p className="mt-1 truncate text-sm font-medium text-blueprint-ink">{user.email}</p>
+            <Button type="button" variant="secondary" className="mt-3 h-9 w-full justify-start" onClick={() => void signOut()}>
+              <LogOut className="h-4 w-4" />
+              Sair
+            </Button>
+          </div>
+        ) : null}
       </aside>
 
       <div className="lg:pl-72">

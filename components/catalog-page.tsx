@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldLabel, Input, Select } from "@/components/ui/field";
 import { useProject } from "@/components/project-context";
 import { CatalogItem, ExpenseType } from "@/lib/mock-data";
@@ -46,6 +47,7 @@ export function CatalogPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CatalogForm>(emptyForm);
+  const [itemToDelete, setItemToDelete] = useState<CatalogItem | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [error, setError] = useState("");
@@ -87,7 +89,7 @@ export function CatalogPage() {
     setError("");
   }
 
-  function submitItem(event: FormEvent<HTMLFormElement>) {
+  async function submitItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const name = form.name.trim();
@@ -110,16 +112,20 @@ export function CatalogPage() {
       referencePrice,
     };
 
-    if (editingId) {
-      updateCatalogItem(editingId, itemPatch);
-    } else {
-      addCatalogItem({
-        id: `item-${Date.now()}`,
-        ...itemPatch,
-      });
-    }
+    try {
+      if (editingId) {
+        await updateCatalogItem(editingId, itemPatch);
+      } else {
+        await addCatalogItem({
+          id: `item-${Date.now()}`,
+          ...itemPatch,
+        });
+      }
 
-    resetForm();
+      resetForm();
+    } catch {
+      setError("Não foi possível salvar o item agora. Tente novamente.");
+    }
   }
 
   function handleDelete(item: CatalogItem) {
@@ -130,8 +136,19 @@ export function CatalogPage() {
       return;
     }
 
-    if (window.confirm(`Excluir "${item.name}" do catálogo?`)) {
-      deleteCatalogItem(item.id);
+    setItemToDelete(item);
+  }
+
+  async function confirmDeleteItem() {
+    if (!itemToDelete) {
+      return;
+    }
+
+    try {
+      await deleteCatalogItem(itemToDelete.id);
+      setItemToDelete(null);
+    } catch {
+      setError("Não foi possível excluir o item agora. Tente novamente.");
     }
   }
 
@@ -279,6 +296,20 @@ export function CatalogPage() {
           </table>
         </div>
       </section>
+
+      <ConfirmDialog
+        destructive
+        confirmLabel="Excluir item"
+        description={
+          itemToDelete
+            ? `O item "${itemToDelete.name}" será removido do catálogo. Lançamentos já existentes não serão alterados.`
+            : ""
+        }
+        onCancel={() => setItemToDelete(null)}
+        onConfirm={confirmDeleteItem}
+        open={Boolean(itemToDelete)}
+        title="Excluir item do catálogo?"
+      />
     </main>
   );
 }

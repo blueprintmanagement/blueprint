@@ -15,13 +15,16 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input, Select } from "@/components/ui/field";
 import { NewExpenseDrawer } from "@/components/expenses/new-expense-drawer";
+import { useAuth } from "@/components/auth-context";
 import { useProject } from "@/components/project-context";
 import { formatCurrency } from "@/lib/format";
 import { getAvailableMonths } from "@/lib/months";
 import { displayText } from "@/lib/display";
 import { Expense } from "@/lib/mock-data";
+import { uploadAttachment } from "@/lib/services/attachment-service";
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -32,9 +35,11 @@ function formatDate(date: string) {
 }
 
 export function ExpensesPage() {
-  const { activeProject, addExpense, deleteExpense, expenses, projectExpenses, suppliers, updateExpense } = useProject();
+  const { activeOrganizationId } = useAuth();
+  const { activeProject, addExpense, deleteExpense, expenses, isCloudMode, projectExpenses, suppliers, updateExpense } = useProject();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [monthFilter, setMonthFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [phaseFilter, setPhaseFilter] = useState("all");
@@ -167,12 +172,37 @@ export function ExpensesPage() {
   }
 
   function handleDeleteExpense(expense: Expense) {
-    const confirmed = window.confirm(
-      `Excluir a despesa "${expense.description}" no valor de ${formatCurrency(expense.total)}? Esta ação remove o lançamento deste protótipo local.`,
-    );
+    setExpenseToDelete(expense);
+  }
 
-    if (confirmed) {
-      deleteExpense(expense.id);
+  async function attachExpenseFile(expense: Expense, file: File) {
+    if (isCloudMode && activeOrganizationId) {
+      await uploadAttachment({
+        file,
+        organizationId: activeOrganizationId,
+        ownerId: expense.id,
+        ownerType: "expense",
+      });
+    }
+
+    await updateExpense(expense.id, {
+      hasAttachment: true,
+      attachmentName: file.name,
+      attachmentSize: file.size,
+      attachmentType: file.type,
+    });
+  }
+
+  async function confirmDeleteExpense() {
+    if (!expenseToDelete) {
+      return;
+    }
+
+    try {
+      await deleteExpense(expenseToDelete.id);
+      setExpenseToDelete(null);
+    } catch {
+      setExpenseToDelete(null);
     }
   }
 
@@ -404,7 +434,7 @@ export function ExpensesPage() {
                         className="h-8 px-2"
                         title={expense.status === "Pago" ? "Marcar pendente" : "Marcar pago"}
                         onClick={() =>
-                          updateExpense(expense.id, {
+                          void updateExpense(expense.id, {
                             status: expense.status === "Pago" ? "Pendente" : "Pago",
                           })
                         }
@@ -417,7 +447,7 @@ export function ExpensesPage() {
                         className="h-8 px-2"
                         title={expense.sentToAccountant ? "Desmarcar envio" : "Marcar enviado"}
                         onClick={() =>
-                          updateExpense(expense.id, {
+                          void updateExpense(expense.id, {
                             sentToAccountant: !expense.sentToAccountant,
                           })
                         }
@@ -436,12 +466,7 @@ export function ExpensesPage() {
                           onChange={(event) => {
                             const file = event.target.files?.[0];
                             if (!file) return;
-                            updateExpense(expense.id, {
-                              hasAttachment: true,
-                              attachmentName: file.name,
-                              attachmentSize: file.size,
-                              attachmentType: file.type,
-                            });
+                            void attachExpenseFile(expense, file);
                           }}
                         />
                       </label>
@@ -483,9 +508,7 @@ export function ExpensesPage() {
       <NewExpenseDrawer
         editingExpense={editingExpense}
         open={isDrawerOpen}
-        onCreateExpense={(expense) => {
-          addExpense(expense);
-        }}
+        onCreateExpense={addExpense}
         onUpdateExpense={updateExpense}
         onOpenChange={(open) => {
           setIsDrawerOpen(open);
@@ -493,6 +516,20 @@ export function ExpensesPage() {
             setEditingExpense(null);
           }
         }}
+      />
+
+      <ConfirmDialog
+        destructive
+        confirmLabel="Excluir despesa"
+        description={
+          expenseToDelete
+            ? `A despesa "${expenseToDelete.description}" no valor de ${formatCurrency(expenseToDelete.total)} será removida do dossiê e dos relatórios deste empreendimento.`
+            : ""
+        }
+        onCancel={() => setExpenseToDelete(null)}
+        onConfirm={confirmDeleteExpense}
+        open={Boolean(expenseToDelete)}
+        title="Excluir lançamento?"
       />
     </main>
   );

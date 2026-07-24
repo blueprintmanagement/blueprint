@@ -6,12 +6,16 @@ import { AlertCircle, CheckCircle2, Download, FileArchive, FileCheck2, Send } fr
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
+import { useAuth } from "@/components/auth-context";
 import { useProject } from "@/components/project-context";
 import { formatCurrency } from "@/lib/format";
 import { getAvailableMonths } from "@/lib/months";
+import { Expense } from "@/lib/mock-data";
+import { uploadAttachment } from "@/lib/services/attachment-service";
 
 export function ReportsPage() {
-  const { activeProject, expenses, projectExpenses, suppliers, updateExpense } = useProject();
+  const { activeOrganizationId } = useAuth();
+  const { activeProject, expenses, isCloudMode, projectExpenses, suppliers, updateExpense } = useProject();
   const availableMonths = useMemo(
     () => getAvailableMonths(projectExpenses.map((expense) => expense.purchaseDate)),
     [projectExpenses],
@@ -51,6 +55,24 @@ export function ReportsPage() {
       expenses,
       project: activeProject,
       suppliers,
+    });
+  }
+
+  async function attachExpenseFile(expense: Expense, file: File) {
+    if (isCloudMode && activeOrganizationId) {
+      await uploadAttachment({
+        file,
+        organizationId: activeOrganizationId,
+        ownerId: expense.id,
+        ownerType: "expense",
+      });
+    }
+
+    await updateExpense(expense.id, {
+      hasAttachment: true,
+      attachmentName: file.name,
+      attachmentSize: file.size,
+      attachmentType: file.type,
     });
   }
 
@@ -199,12 +221,7 @@ export function ReportsPage() {
                         onChange={(event) => {
                           const file = event.target.files?.[0];
                           if (!file) return;
-                          updateExpense(expense.id, {
-                            hasAttachment: true,
-                            attachmentName: file.name,
-                            attachmentSize: file.size,
-                            attachmentType: file.type,
-                          });
+                          void attachExpenseFile(expense, file);
                         }}
                       />
                     </label>
@@ -214,7 +231,7 @@ export function ReportsPage() {
                       type="button"
                       variant="secondary"
                       className="h-9 px-3 text-xs"
-                      onClick={() => updateExpense(expense.id, { sentToAccountant: true })}
+                      onClick={() => void updateExpense(expense.id, { sentToAccountant: true })}
                     >
                       <Send className="h-4 w-4" />
                       Marcar enviado

@@ -1,10 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { FileUp, ReceiptText, Sparkles, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, FileText, FileUp, Layers3, ReceiptText, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, Input, Select } from "@/components/ui/field";
+import { useAuth } from "@/components/auth-context";
 import { useProject } from "@/components/project-context";
 import { formatCurrency } from "@/lib/format";
 import {
@@ -15,19 +15,31 @@ import {
   PaymentMethod,
   Supplier,
 } from "@/lib/mock-data";
+import { ImportedNfe, parseNfeXml } from "@/lib/nfe-xml";
+import { uploadAttachment } from "@/lib/services/attachment-service";
 import { cn } from "@/lib/utils";
 
 type NewExpenseDrawerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateExpense?: (expense: Expense) => void;
-  onUpdateExpense?: (expenseId: string, patch: Partial<Expense>) => void;
+  onCreateExpense?: (expense: Expense) => Promise<string> | string | void;
+  onUpdateExpense?: (expenseId: string, patch: Partial<Expense>) => Promise<void> | void;
   editingExpense?: Expense | null;
 };
 
 const today = new Date().toISOString().slice(0, 10);
 const typeOptions: ExpenseType[] = ["Material", "Mão de Obra", "Serviço", "Equipamento"];
 const commonUnits = ["un", "saco", "m3", "barra", "diária", "semana", "serviço", "dia"];
+const maxXmlSize = 5 * 1024 * 1024;
+type XmlImportMode = "summary" | "items";
+
+function normalizeDocument(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function createClientId(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 export function NewExpenseDrawer({
   editingExpense,
@@ -41,9 +53,11 @@ export function NewExpenseDrawer({
     addCatalogItem,
     addSupplier,
     catalogItems,
+    isCloudMode,
     projectExpenses,
     suppliers,
   } = useProject();
+  const { activeOrganizationId } = useAuth();
   const [phaseId, setPhaseId] = useState(activeProject.phases[0]?.id ?? "");
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? "");
   const [newSupplierName, setNewSupplierName] = useState("");
@@ -67,6 +81,10 @@ export function NewExpenseDrawer({
   const [attachmentName, setAttachmentName] = useState("");
   const [attachmentSize, setAttachmentSize] = useState<number | undefined>();
   const [attachmentType, setAttachmentType] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [importedNfe, setImportedNfe] = useState<ImportedNfe | null>(null);
+  const [xmlImportMode, setXmlImportMode] = useState<XmlImportMode>("summary");
+  const [xmlError, setXmlError] = useState("");
   const [error, setError] = useState("");
   const isEditing = Boolean(editingExpense);
 
@@ -104,6 +122,10 @@ export function NewExpenseDrawer({
     setAttachmentName(editingExpense.attachmentName ?? "");
     setAttachmentSize(editingExpense.attachmentSize);
     setAttachmentType(editingExpense.attachmentType ?? "");
+    setAttachmentFile(null);
+    setImportedNfe(null);
+    setXmlImportMode("summary");
+    setXmlError("");
     setError("");
   }, [catalogItems, editingExpense, open]);
 
@@ -128,6 +150,7 @@ export function NewExpenseDrawer({
     (item) => item.name.toLowerCase() === itemName.trim().toLowerCase(),
   );
   const total = Number(quantity || 0) * Number(unitValue || 0);
+  const displayedTotal = importedNfe && xmlImportMode === "items" ? importedNfe.total : total;
   const priceHistory = useMemo(() => {
     const normalized = itemName.trim().toLowerCase();
 
@@ -175,10 +198,142 @@ export function NewExpenseDrawer({
     setAttachmentName("");
     setAttachmentSize(undefined);
     setAttachmentType("");
+    setAttachmentFile(null);
+    setImportedNfe(null);
+    setXmlImportMode("summary");
+    setXmlError("");
     setError("");
   }
 
-  function submitExpense(event: FormEvent<HTMLFormElement>) {
+  function applyImportedNfe(imported: ImportedNfe, mode: XmlImportMode) {
+    const firstItem = imported.items[0];
+    const existingSupplier = suppliers.find((supplier) => {
+      const sameDocument =
+        imported.supplierDocument &&
+        normalizeDocument(supplier.document) === imported.supplierDocument;
+      const sameName = supplier.name.toLowerCase() === imported.supplierName.toLowerCase();
+      return sameDocument || sameName;
+    });
+
+    setImportedNfe(imported);
+    setXmlImportMode(mode);
+    setPurchaseDate(imported.emittedAt);
+    setInvoiceNumber(imported.invoiceNumber);
+    setPaymentMethod(imported.paymentMethod);
+    setStatus("Pago");
+    setSentToAccountant(false);
+    setAttachmentName(imported.invoiceNumber ? `nfe-${imported.invoiceNumber}.xml` : "nota-fiscal.xml");
+    setAttachmentType("application/xml");
+    setAttachmentSize(undefined);
+    setAttachmentFile(null);
+
+    if (existingSupplier) {
+      setSupplierId(existingSupplier.id);
+      setNewSupplierName("");
+      setNewSupplierDocument("");
+      setNewSupplierContact("");
+      setNewSupplierBankInfo("");
+    } else {
+      setSupplierId("new");
+      setNewSupplierName(imported.supplierName);
+      setNewSupplierDocument(imported.supplierDocument || "Documento não informado");
+      setNewSupplierContact("Contato não informado");
+      setNewSupplierBankInfo("");
+    }
+
+    if (mode === "items" && firstItem) {
+      setItemName(firstItem.name);
+      setUnit(firstItem.unit);
+      setQuantity(firstItem.quantity);
+      setUnitValue(firstItem.unitValue);
+    } else {
+      setItemName(
+        imported.items.length > 1
+          ? `NF ${imported.invoiceNumber || "sem número"} - ${imported.supplierName} (${imported.items.length} itens)`
+          : firstItem?.name ?? `NF ${imported.invoiceNumber || "sem número"}`,
+      );
+      setUnit("nota");
+      setQuantity(1);
+      setUnitValue(imported.total);
+    }
+
+    setCatalogItemId("");
+    setItemType(imported.type);
+    setSaveToCatalog(mode === "items");
+    setXmlError("");
+    setError("");
+  }
+
+  async function handleXmlFile(file?: File) {
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".xml")) {
+      setXmlError("Envie um arquivo XML de NF-e.");
+      return;
+    }
+
+    if (file.size > maxXmlSize) {
+      setXmlError("O XML deve ter no máximo 5 MB.");
+      return;
+    }
+
+    try {
+      const imported = parseNfeXml(await file.text());
+      applyImportedNfe(imported, imported.items.length > 1 ? "summary" : "items");
+      setAttachmentName(file.name);
+      setAttachmentSize(file.size);
+      setAttachmentType(file.type || "application/xml");
+      setAttachmentFile(file);
+    } catch (caughtError) {
+      setXmlError(caughtError instanceof Error ? caughtError.message : "Não foi possível importar o XML.");
+    }
+  }
+
+  async function resolveSupplierId() {
+    if (supplierId !== "new") {
+      return supplierId;
+    }
+
+    if (!newSupplierName.trim()) {
+      setError("Informe o nome do novo fornecedor.");
+      return "";
+    }
+
+    const newSupplier: Supplier = {
+      id: `supplier-${Date.now()}`,
+      name: newSupplierName.trim(),
+      document: newSupplierDocument.trim() || "Documento não informado",
+      category: itemType,
+      contact: newSupplierContact.trim() || "Contato não informado",
+      bankInfo: newSupplierBankInfo.trim() || undefined,
+    };
+
+    return addSupplier(newSupplier);
+  }
+
+  async function persistAttachmentForExpense(expenseId: string) {
+    if (!attachmentFile || !isCloudMode || !activeOrganizationId) {
+      return;
+    }
+
+    await uploadAttachment({
+      file: attachmentFile,
+      organizationId: activeOrganizationId,
+      ownerId: expenseId,
+      ownerType: "expense",
+    });
+
+    await onUpdateExpense?.(expenseId, {
+      hasAttachment: true,
+      attachmentName: attachmentFile.name,
+      attachmentSize: attachmentFile.size,
+      attachmentType: attachmentFile.type || undefined,
+    });
+  }
+
+  async function submitExpense(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const description = itemName.trim();
@@ -190,29 +345,87 @@ export function NewExpenseDrawer({
 
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const shouldContinue = submitter?.value === "continue";
-    let finalSupplierId = supplierId;
+    const finalSupplierId = await resolveSupplierId();
 
-    if (supplierId === "new") {
-      if (!newSupplierName.trim()) {
-        setError("Informe o nome do novo fornecedor.");
-        return;
-      }
-
-      const newSupplier: Supplier = {
-        id: `supplier-${Date.now()}`,
-        name: newSupplierName.trim(),
-        document: newSupplierDocument.trim() || "Documento não informado",
-        category: itemType,
-        contact: newSupplierContact.trim() || "Contato não informado",
-        bankInfo: newSupplierBankInfo.trim() || undefined,
-      };
-
-      addSupplier(newSupplier);
-      finalSupplierId = newSupplier.id;
+    if (!finalSupplierId) {
+      return;
     }
 
     if (quantity <= 0 || unitValue <= 0) {
       setError("Quantidade e valor unitário precisam ser maiores que zero.");
+      return;
+    }
+
+    if (!editingExpense && importedNfe && xmlImportMode === "items") {
+      const catalogIdsByName = new Map<string, string>();
+      const fiscalDocumentId = createClientId("fiscal-doc");
+      const attachmentId = attachmentName ? createClientId("attachment") : undefined;
+
+      for (const [index, item] of importedNfe.items.entries()) {
+        const normalizedItemName = item.name.trim().toLowerCase();
+        let finalCatalogItemId = "item-manual";
+
+        if (saveToCatalog) {
+          const existingItem = catalogItems.find(
+            (catalogItem) => catalogItem.name.toLowerCase() === normalizedItemName,
+          );
+
+          finalCatalogItemId = existingItem?.id ?? catalogIdsByName.get(normalizedItemName) ?? "";
+
+          if (!finalCatalogItemId) {
+            const newItem: CatalogItem = {
+              id: `item-${Date.now()}-${index}`,
+              name: item.name.trim(),
+              type: itemType,
+              unit: item.unit,
+              referencePrice: item.unitValue,
+            };
+
+            await addCatalogItem(newItem);
+            catalogIdsByName.set(normalizedItemName, newItem.id);
+            finalCatalogItemId = newItem.id;
+          }
+        }
+
+        const expenseId = `exp-${Date.now()}-${index}`;
+        const createdExpenseId = await onCreateExpense?.({
+          id: expenseId,
+          projectId: activeProject.id,
+          phaseId,
+          fiscalDocumentId,
+          fiscalDocumentType: "NFE",
+          fiscalDocumentAccessKey: importedNfe.accessKey,
+          fiscalDocumentStatus: "Importado",
+          fiscalLineItemId: `${fiscalDocumentId}-line-${index + 1}`,
+          fiscalLineItemCode: item.id,
+          date: importedNfe.emittedAt,
+          purchaseDate: importedNfe.emittedAt,
+          invoicePaymentDate: invoicePaymentDate || undefined,
+          storePaymentDate: storePaymentDate || undefined,
+          invoiceNumber: importedNfe.invoiceNumber || undefined,
+          supplierId: finalSupplierId,
+          catalogItemId: finalCatalogItemId,
+          description: item.name,
+          type: itemType,
+          quantity: item.quantity,
+          unitValue: item.unitValue,
+          total: item.total,
+          paymentMethod,
+          status,
+          sentToAccountant,
+          hasAttachment: Boolean(attachmentName) && (!isCloudMode || !attachmentFile),
+          attachmentId,
+          attachmentName: attachmentName || undefined,
+          attachmentSize,
+          attachmentType: attachmentType || undefined,
+        });
+        await persistAttachmentForExpense(createdExpenseId || expenseId);
+      }
+
+      resetForm();
+      if (!shouldContinue) {
+        onOpenChange(false);
+      }
       return;
     }
 
@@ -226,14 +439,22 @@ export function NewExpenseDrawer({
         unit,
         referencePrice: unitValue,
       };
-      addCatalogItem(newItem);
-      finalCatalogItemId = newItem.id;
+      finalCatalogItemId = await addCatalogItem(newItem);
     }
+
+    const fiscalDocumentId = importedNfe ? createClientId("fiscal-doc") : undefined;
+    const attachmentId = attachmentName ? createClientId("attachment") : undefined;
 
     const expensePayload: Expense = {
       id: `exp-${Date.now()}`,
       projectId: activeProject.id,
       phaseId,
+      fiscalDocumentId,
+      fiscalDocumentType: importedNfe ? "NFE" : undefined,
+      fiscalDocumentAccessKey: importedNfe?.accessKey,
+      fiscalDocumentStatus: importedNfe ? "Importado" : undefined,
+      fiscalLineItemId: fiscalDocumentId ? `${fiscalDocumentId}-summary` : undefined,
+      fiscalLineItemCode: importedNfe?.items[0]?.id,
       date: purchaseDate,
       purchaseDate,
       invoicePaymentDate: invoicePaymentDate || undefined,
@@ -249,24 +470,27 @@ export function NewExpenseDrawer({
       paymentMethod,
       status,
       sentToAccountant,
-      hasAttachment: Boolean(attachmentName),
+      hasAttachment: Boolean(attachmentName) && (!isCloudMode || !attachmentFile),
+      attachmentId,
       attachmentName: attachmentName || undefined,
       attachmentSize,
       attachmentType: attachmentType || undefined,
     };
 
     if (editingExpense) {
-      onUpdateExpense?.(editingExpense.id, {
+      await onUpdateExpense?.(editingExpense.id, {
         ...expensePayload,
         id: editingExpense.id,
         projectId: editingExpense.projectId,
       });
+      await persistAttachmentForExpense(editingExpense.id);
       resetForm();
       onOpenChange(false);
       return;
     }
 
-    onCreateExpense?.(expensePayload);
+    const createdExpenseId = await onCreateExpense?.(expensePayload);
+    await persistAttachmentForExpense(createdExpenseId || expensePayload.id);
 
     resetForm();
     if (!shouldContinue) {
@@ -315,6 +539,114 @@ export function NewExpenseDrawer({
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={submitExpense}>
           <div className="flex-1 overflow-y-auto px-5 py-5">
             <div className="space-y-4">
+                {!isEditing ? (
+                  <section className="rounded-lg border border-blueprint-line bg-white/92 p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 text-sm font-semibold text-blueprint-ink">
+                          <FileText className="h-4 w-4 text-blueprint-accent" />
+                          Importar XML da NF-e
+                          <span className="rounded-full bg-blueprint-surface px-2 py-0.5 text-[11px] font-medium text-blueprint-muted">
+                            opcional
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-5 text-blueprint-muted">
+                          Use o XML para preencher fornecedor, nota, data, itens, quantidades e valores. Depois revise antes de salvar.
+                        </p>
+                      </div>
+                      <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-blueprint-line bg-white/90 px-4 text-sm font-medium text-blueprint-ink shadow-sm transition hover:border-blueprint-accent hover:bg-[#eef7ff]">
+                        <FileUp className="h-4 w-4" />
+                        Selecionar XML
+                        <input
+                          type="file"
+                          accept=".xml,text/xml,application/xml"
+                          className="sr-only"
+                          onChange={(event) => {
+                            void handleXmlFile(event.target.files?.[0]);
+                            event.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {xmlError ? (
+                      <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                        {xmlError}
+                      </p>
+                    ) : null}
+
+                    {importedNfe ? (
+                      <div className="mt-4 rounded-lg border border-[#c8dbea] bg-[#f5fbff] p-3">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-blueprint-ink">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                              NF-e importada
+                            </div>
+                            <p className="mt-1 truncate text-sm text-blueprint-muted">
+                              {importedNfe.supplierName} · NF {importedNfe.invoiceNumber || "sem número"} · {formatCurrency(importedNfe.total)}
+                            </p>
+                            <p className="mt-1 text-xs text-blueprint-muted">
+                              {importedNfe.items.length} {importedNfe.items.length === 1 ? "item encontrado" : "itens encontrados"} no XML.
+                            </p>
+                          </div>
+                          {importedNfe.items.length > 1 ? (
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <button
+                                type="button"
+                                onClick={() => applyImportedNfe(importedNfe, "summary")}
+                                className={cn(
+                                  "rounded-md border px-3 py-2 text-left text-xs transition",
+                                  xmlImportMode === "summary"
+                                    ? "border-blueprint-accent bg-white text-blueprint-ink shadow-sm"
+                                    : "border-blueprint-line bg-white/70 text-blueprint-muted hover:border-blueprint-accent",
+                                )}
+                              >
+                                <span className="block font-semibold">Despesa única</span>
+                                <span>Um lançamento com o total da nota.</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => applyImportedNfe(importedNfe, "items")}
+                                className={cn(
+                                  "rounded-md border px-3 py-2 text-left text-xs transition",
+                                  xmlImportMode === "items"
+                                    ? "border-blueprint-accent bg-white text-blueprint-ink shadow-sm"
+                                    : "border-blueprint-line bg-white/70 text-blueprint-muted hover:border-blueprint-accent",
+                                )}
+                              >
+                                <span className="flex items-center gap-1 font-semibold">
+                                  <Layers3 className="h-3.5 w-3.5" />
+                                  Itens separados
+                                </span>
+                                <span>Cria uma despesa por produto.</span>
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {xmlImportMode === "items" ? (
+                          <div className="mt-3 max-h-32 overflow-y-auto rounded-md border border-blueprint-line bg-white">
+                            {importedNfe.items.slice(0, 8).map((item) => (
+                              <div key={item.id} className="grid grid-cols-[1fr_auto] gap-3 border-b border-blueprint-line px-3 py-2 text-xs last:border-b-0">
+                                <span className="truncate text-blueprint-ink">{item.name}</span>
+                                <span className="font-medium text-blueprint-muted">
+                                  {item.quantity} {item.unit} · {formatCurrency(item.total)}
+                                </span>
+                              </div>
+                            ))}
+                            {importedNfe.items.length > 8 ? (
+                              <div className="px-3 py-2 text-xs text-blueprint-muted">
+                                + {importedNfe.items.length - 8} itens adicionais serão lançados ao salvar.
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </section>
+                ) : null}
+
                 <section className="rounded-lg border border-blueprint-line bg-white/92 p-4 shadow-sm">
                   <div className="flex items-center gap-2 text-sm font-semibold text-blueprint-ink">
                     <Sparkles className="h-4 w-4 text-blueprint-accent" />
@@ -544,7 +876,7 @@ export function NewExpenseDrawer({
                     </span>
                     <span className="block text-xs text-blueprint-muted">
                       {attachmentSize
-                        ? `${(attachmentSize / 1024 / 1024).toFixed(2)} MB registrados no protótipo`
+                        ? `${(attachmentSize / 1024 / 1024).toFixed(2)} MB selecionados`
                         : "PDF, imagem ou foto da nota"}
                     </span>
                   </span>
@@ -557,6 +889,7 @@ export function NewExpenseDrawer({
                       setAttachmentName(file?.name ?? "");
                       setAttachmentSize(file?.size);
                       setAttachmentType(file?.type ?? "");
+                      setAttachmentFile(file ?? null);
                     }}
                   />
                 </label>
@@ -573,9 +906,11 @@ export function NewExpenseDrawer({
           <footer className="flex flex-col gap-3 border-t border-blueprint-line bg-white/92 px-5 py-4 shadow-[0_-12px_28px_rgba(6,28,61,0.05)] md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-normal text-blueprint-muted">Total do lançamento</p>
-              <p className="text-2xl font-semibold text-blueprint-ink">{formatCurrency(total)}</p>
+              <p className="text-2xl font-semibold text-blueprint-ink">{formatCurrency(displayedTotal)}</p>
               <p className="text-xs text-blueprint-muted">
-                {quantity || 0} {unit} x {formatCurrency(unitValue || 0)}
+                {importedNfe && xmlImportMode === "items"
+                  ? `${importedNfe.items.length} itens importados da NF-e`
+                  : `${quantity || 0} ${unit} x ${formatCurrency(unitValue || 0)}`}
               </p>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row">

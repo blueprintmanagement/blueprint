@@ -14,7 +14,23 @@ The current application is a Next.js front-end MVP focused on:
 
 This repository is used for private versioning and backup. It is not an open-source project.
 
-Current data persistence is local to the browser through `localStorage`. Backend, database, authentication, and real file storage are intentionally out of scope for this first front-end validation stage.
+The MVP now uses Supabase Auth, organization-scoped data, private attachment storage, and RLS-backed tables. A localStorage fallback remains only for development when Supabase environment variables are not configured.
+
+## Supabase Foundation
+
+1. Open the Supabase SQL Editor for the project.
+2. Execute `supabase/schema.sql`.
+3. Copy `.env.example` to `.env.local`.
+4. Fill:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SECRET_KEY`
+
+The schema is multi-tenant by default: all business tables are scoped by `organization_id`, Row Level Security is enabled, and file storage is private through the `blueprint-attachments` bucket.
+
+Authentication and organization creation are active. Organization creation is handled by a server-side route that validates the logged-in user's Supabase token before using the server-only key.
+
+The local `/api/dev-signup` route exists only to bypass Supabase's default email rate limit during local development. It is disabled in production and restricted to localhost.
 
 ## Development
 
@@ -28,5 +44,8 @@ Open the local Next.js URL shown in the terminal.
 ## Validation
 
 ```bash
+npm run lint
+npm run typecheck
 npm run build
+npm audit --audit-level=moderate
 ```

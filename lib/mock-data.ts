@@ -3,11 +3,16 @@ export type PaymentMethod = "PIX" | "Boleto" | "Cartão" | "A Prazo";
 export type ExpenseStatus = "Pago" | "Pendente";
 export type ProjectStatus = "Planejamento" | "Obra" | "Pronto" | "Entregue";
 export type AgendaEntryType = "Lembrete" | "Anotação" | "Mudança de fase" | "Outro";
+export type FiscalDocumentType = "NFE" | "NFCE" | "NFSE" | "CTE" | "OTHER";
+export type FiscalDocumentStatus = "Importado" | "Revisado" | "Cancelado";
 
 export type Phase = {
   id: string;
+  organizationId?: string;
+  projectId?: string;
   name: string;
   budget: number;
+  isArchived?: boolean;
 };
 
 export type ProjectUnit = {
@@ -20,6 +25,7 @@ export type ProjectUnit = {
 
 export type Project = {
   id: string;
+  organizationId?: string;
   name: string;
   shortName: string;
   address: string;
@@ -46,6 +52,7 @@ export type Project = {
 
 export type Supplier = {
   id: string;
+  organizationId?: string;
   name: string;
   document: string;
   category: ExpenseType;
@@ -55,16 +62,51 @@ export type Supplier = {
 
 export type CatalogItem = {
   id: string;
+  organizationId?: string;
   name: string;
   type: ExpenseType;
   unit: string;
   referencePrice: number;
 };
 
+export type Attachment = {
+  id: string;
+  organizationId?: string;
+  ownerType: "expense" | "fiscalDocument" | "project" | "supplier";
+  ownerId: string;
+  fileName: string;
+  mimeType?: string;
+  size?: number;
+  storagePath?: string;
+  createdAt: string;
+};
+
+export type FiscalDocument = {
+  id: string;
+  organizationId?: string;
+  projectId: string;
+  supplierId?: string;
+  type: FiscalDocumentType;
+  status: FiscalDocumentStatus;
+  invoiceNumber?: string;
+  accessKey?: string;
+  issuedAt?: string;
+  total: number;
+  xmlAttachmentId?: string;
+  createdAt: string;
+};
+
 export type Expense = {
   id: string;
+  organizationId?: string;
   projectId: string;
   phaseId: string;
+  fiscalDocumentId?: string;
+  fiscalDocumentType?: FiscalDocumentType;
+  fiscalDocumentAccessKey?: string;
+  fiscalDocumentStatus?: FiscalDocumentStatus;
+  fiscalLineItemId?: string;
+  fiscalLineItemCode?: string;
   date: string;
   purchaseDate: string;
   invoicePaymentDate?: string;
@@ -81,6 +123,7 @@ export type Expense = {
   status: ExpenseStatus;
   sentToAccountant: boolean;
   hasAttachment: boolean;
+  attachmentId?: string;
   attachmentName?: string;
   attachmentSize?: number;
   attachmentType?: string;

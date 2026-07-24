@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthGate } from "@/components/auth-gate";
+import { AuthProvider } from "@/components/auth-context";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { ProjectProvider } from "@/components/project-context";
 
@@ -16,9 +18,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <ProjectProvider>
-          <DashboardShell>{children}</DashboardShell>
-        </ProjectProvider>
+        <AuthProvider>
+          <AuthGate>
+            <ProjectProvider>
+              <DashboardShell>{children}</DashboardShell>
+            </ProjectProvider>
+          </AuthGate>
+        </AuthProvider>
       </body>
     </html>
   );

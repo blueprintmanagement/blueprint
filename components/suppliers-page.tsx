@@ -45,10 +45,11 @@ export function SuppliersPage() {
   const [form, setForm] = useState<SupplierForm>(emptyForm);
   const [error, setError] = useState("");
 
-  const usedSupplierIds = new Set(projectExpenses.map((expense) => expense.supplierId));
   const supplierRows = useMemo(
-    () =>
-      suppliers
+    () => {
+      const usedSupplierIds = new Set(projectExpenses.map((expense) => expense.supplierId));
+
+      return suppliers
         .map((supplier) => {
           const supplierExpenses = projectExpenses.filter((expense) => expense.supplierId === supplier.id);
           const total = supplierExpenses.reduce((sum, expense) => sum + expense.total, 0);
@@ -62,8 +63,9 @@ export function SuppliersPage() {
             total,
           };
         })
-        .sort((a, b) => Number(b.isUsedInProject) - Number(a.isUsedInProject) || b.total - a.total),
-    [projectExpenses, suppliers, usedSupplierIds],
+        .sort((a, b) => Number(b.isUsedInProject) - Number(a.isUsedInProject) || b.total - a.total);
+    },
+    [projectExpenses, suppliers],
   );
 
   function startCreate() {
@@ -87,7 +89,7 @@ export function SuppliersPage() {
     setError("");
   }
 
-  function submitSupplier(event: FormEvent<HTMLFormElement>) {
+  async function submitSupplier(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!form.name.trim()) {
@@ -103,16 +105,20 @@ export function SuppliersPage() {
       bankInfo: form.bankInfo.trim() || undefined,
     };
 
-    if (editingId) {
-      updateSupplier(editingId, supplierPatch);
-    } else {
-      addSupplier({
-        id: `supplier-${Date.now()}`,
-        ...supplierPatch,
-      });
-    }
+    try {
+      if (editingId) {
+        await updateSupplier(editingId, supplierPatch);
+      } else {
+        await addSupplier({
+          id: `supplier-${Date.now()}`,
+          ...supplierPatch,
+        });
+      }
 
-    cancelForm();
+      cancelForm();
+    } catch {
+      setError("Não foi possível salvar o fornecedor agora. Tente novamente.");
+    }
   }
 
   return (

@@ -385,7 +385,7 @@ export function AgendaPage() {
     setError("");
   }
 
-  function submitEntry(event: FormEvent<HTMLFormElement>) {
+  async function submitEntry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!form.date || !form.title.trim()) {
@@ -398,18 +398,22 @@ export function AgendaPage() {
       return;
     }
 
-    addAgendaEntry({
-      createdAt: new Date().toISOString(),
-      date: form.date,
-      description: form.description.trim() || undefined,
-      id: `agenda-${Date.now()}`,
-      phaseId: requiresPhase ? form.phaseId : undefined,
-      projectId: form.projectId,
-      title: form.title.trim(),
-      type: toAgendaEntryType(form.type),
-    });
-    setIsCreating(false);
-    resetForm();
+    try {
+      await addAgendaEntry({
+        createdAt: new Date().toISOString(),
+        date: form.date,
+        description: form.description.trim() || undefined,
+        id: `agenda-${Date.now()}`,
+        phaseId: requiresPhase ? form.phaseId : undefined,
+        projectId: form.projectId,
+        title: form.title.trim(),
+        type: toAgendaEntryType(form.type),
+      });
+      setIsCreating(false);
+      resetForm();
+    } catch {
+      setError("Não foi possível salvar o registro agora. Tente novamente.");
+    }
   }
 
   return (
@@ -661,7 +665,7 @@ function AgendaListView({
   events,
   groupedEvents,
 }: {
-  deleteAgendaEntry: (entryId: string) => void;
+  deleteAgendaEntry: (entryId: string) => Promise<void>;
   events: AgendaEvent[];
   groupedEvents: Record<string, AgendaEvent[]>;
 }) {
@@ -678,7 +682,7 @@ function AgendaListView({
               <AgendaEventCard
                 key={event.id}
                 event={event}
-                onDelete={event.source === "Manual" ? () => deleteAgendaEntry(event.id) : undefined}
+                onDelete={event.source === "Manual" ? () => void deleteAgendaEntry(event.id) : undefined}
               />
             ))}
           </div>
@@ -701,7 +705,7 @@ function AgendaCalendarView({
 }: {
   calendarEventsByDate: Record<string, AgendaEvent[]>;
   calendarMonth: string;
-  deleteAgendaEntry: (entryId: string) => void;
+  deleteAgendaEntry: (entryId: string) => Promise<void>;
   days: Array<{ date: string; day: number; inMonth: boolean }>;
   onMonthChange: (month: string) => void;
   today: string;
@@ -715,12 +719,12 @@ function AgendaCalendarView({
     onMonthChange(part === "month" ? `${selectedYear}-${value}` : `${value}-${selectedMonth}`);
   }
 
-  function deleteSelectedEvent() {
+  async function deleteSelectedEvent() {
     if (!selectedEvent || selectedEvent.source !== "Manual") {
       return;
     }
 
-    deleteAgendaEntry(selectedEvent.id);
+    await deleteAgendaEntry(selectedEvent.id);
     setSelectedEvent(null);
   }
 
