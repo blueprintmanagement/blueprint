@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
   async function resetPassword(email: string) {
     if (!supabase) {
-      throw new Error("Supabase nÃ£o configurado.");
+      throw new Error("Supabase não configurado.");
     }
 
     const redirectTo = typeof window !== "undefined" ? window.location.origin : undefined;
@@ -150,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function updatePassword(password: string) {
     if (!supabase) {
-      throw new Error("Supabase nÃ£o configurado.");
+      throw new Error("Supabase não configurado.");
     }
 
     const { error } = await supabase.auth.updateUser({ password });
@@ -244,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!organizationId) {
       throw lastError instanceof Error
         ? lastError
-        : new Error("NÃ£o foi possÃ­vel criar a empresa agora.");
+        : new Error("Não foi possível criar a empresa agora.");
     }
 
     await refreshOrganizations();
