@@ -1,5 +1,5 @@
 -- Blueprint - Supabase foundation schema
--- Execute in the Supabase SQL Editor for project xokuqfllzfbonfodppay.
+-- Execute in the Supabase SQL Editor for your Blueprint project.
 -- Security posture: RLS enabled on every application table; access is scoped by organization membership.
 
 create extension if not exists "pgcrypto";
