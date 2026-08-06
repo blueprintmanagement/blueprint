@@ -50,15 +50,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (isCloudMode && projects.length === 0) {
     return (
       <div className="min-h-screen">
-        <aside className="blueprint-rail fixed inset-y-0 left-0 hidden w-72 border-r border-white/70 px-4 py-5 text-blueprint-ink shadow-[12px_0_34px_rgba(6,28,61,0.06)] lg:block">
+        <aside className="blueprint-rail fixed inset-y-0 left-0 hidden w-72 flex-col overflow-hidden border-r border-white/70 px-4 py-5 text-blueprint-ink shadow-[12px_0_34px_rgba(6,28,61,0.06)] lg:flex">
           <Link
             href="/"
-            className="block rounded-lg border border-white/80 bg-white/86 px-3 py-3 shadow-sm transition hover:shadow-soft"
+            className="block shrink-0 rounded-lg border border-white/80 bg-white/86 px-3 py-3 shadow-sm transition hover:shadow-soft"
           >
             <BrandLogo />
           </Link>
           {user ? (
-            <div className="absolute bottom-5 left-4 right-4 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
+            <div className="mt-auto shrink-0 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
               <p className="truncate text-xs font-semibold uppercase tracking-[0.06em] text-blueprint-muted">
                 {activeOrganization?.name ?? "Organização"}
               </p>
@@ -88,15 +88,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <aside className="blueprint-rail fixed inset-y-0 left-0 hidden w-72 border-r border-white/70 px-4 py-5 text-blueprint-ink shadow-[12px_0_34px_rgba(6,28,61,0.06)] lg:block">
+      <aside className="blueprint-rail fixed inset-y-0 left-0 hidden w-72 flex-col overflow-hidden border-r border-white/70 px-4 py-5 text-blueprint-ink shadow-[12px_0_34px_rgba(6,28,61,0.06)] lg:flex">
         <Link
           href="/"
-          className="block rounded-lg border border-white/80 bg-white/86 px-3 py-3 shadow-sm transition hover:shadow-soft"
+          className="block shrink-0 rounded-lg border border-white/80 bg-white/86 px-3 py-3 shadow-sm transition hover:shadow-soft"
         >
           <BrandLogo />
         </Link>
 
-        <div className="mt-6 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
+        <div className="mt-5 shrink-0 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-[0.06em] text-blueprint-muted">
               Empreendimento aberto
@@ -120,7 +120,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
-        <nav className="mt-6 space-y-1">
+        <nav className="mt-5 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
 
@@ -143,8 +143,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 >
                   <item.icon className="h-4 w-4" />
                 </span>
-                <span className="flex-1 font-medium">{item.name}</span>
-                <span className={cn("text-xs", isActive ? "text-white/66" : "text-slate-400")}>
+                <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
+                <span className={cn("shrink-0 text-xs", isActive ? "text-white/66" : "text-slate-400")}>
                   {item.helper}
                 </span>
               </Link>
@@ -153,7 +153,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         {user ? (
-          <div className="absolute bottom-5 left-4 right-4 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
+          <div className="mt-4 shrink-0 rounded-lg border border-blueprint-line bg-white/82 p-3 shadow-sm">
             <p className="truncate text-xs font-semibold uppercase tracking-[0.06em] text-blueprint-muted">
               {activeOrganization?.name ?? "Organização"}
             </p>
