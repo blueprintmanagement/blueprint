@@ -1,5 +1,5 @@
 export type ExpenseType = "Material" | "Mão de Obra" | "Serviço" | "Equipamento";
-export type PaymentMethod = "PIX" | "Boleto" | "Cartão" | "A Prazo";
+export type PaymentMethod = "PIX" | "Boleto" | "Cartão" | "A Prazo" | "Espécie";
 export type ExpenseStatus = "Pago" | "Pendente";
 export type ProjectStatus = "Planejamento" | "Obra" | "Pronto" | "Entregue";
 export type AgendaEntryType = "Lembrete" | "Anotação" | "Mudança de fase" | "Outro";
@@ -18,6 +18,8 @@ export type Phase = {
 export type ProjectUnit = {
   id: string;
   identification: string;
+  description?: string;
+  saleValue?: number;
   privateArea: number;
   commonArea: number;
   totalArea: number;

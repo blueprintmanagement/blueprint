@@ -296,14 +296,14 @@ export function AgendaPage() {
       if (expense.invoicePaymentDate) {
         events.push({
           date: expense.invoicePaymentDate,
-          description: `Fatura vinculada à despesa ${displayText(expense.description)}.`,
+          description: `Vencimento previsto da fatura vinculada à despesa ${displayText(expense.description)}.`,
           id: `auto-${expense.id}-invoice-payment`,
           kind: "Pagamento",
           phaseName: getPhaseName(project, expense.phaseId),
           projectId: project.id,
           projectName: project.name,
           source: "Automático",
-          title: "Pagamento de fatura",
+          title: "Vencimento da fatura",
           tone: expense.status === "Pago" ? "green" : "amber",
         });
       }
@@ -311,14 +311,14 @@ export function AgendaPage() {
       if (expense.storePaymentDate) {
         events.push({
           date: expense.storePaymentDate,
-          description: `Pagamento na loja/fornecedor: ${supplier?.name ?? "Fornecedor não encontrado"}.`,
+          description: `Pagamento previsto na loja/fornecedor: ${supplier?.name ?? "Fornecedor não encontrado"}.`,
           id: `auto-${expense.id}-store-payment`,
           kind: "Pagamento",
           phaseName: getPhaseName(project, expense.phaseId),
           projectId: project.id,
           projectName: project.name,
           source: "Automático",
-          title: "Pagamento ao fornecedor",
+          title: "Vencimento ao fornecedor",
           tone: expense.status === "Pago" ? "green" : "amber",
         });
       }

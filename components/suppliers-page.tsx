@@ -168,11 +168,11 @@ export function SuppliersPage() {
                 placeholder="Opcional"
               />
             </FieldLabel>
-            <FieldLabel label="Contato">
+            <FieldLabel label="Contato responsável">
               <Input
                 value={form.contact}
                 onChange={(event) => setForm((current) => ({ ...current, contact: event.target.value }))}
-                placeholder="WhatsApp ou email"
+                placeholder="Ex: João - (51) 99999-0000"
               />
             </FieldLabel>
             <FieldLabel label="Dados bancários">
@@ -211,7 +211,7 @@ export function SuppliersPage() {
                 <th className="px-4 py-3 font-semibold">Fornecedor</th>
                 <th className="px-4 py-3 font-semibold">Documento</th>
                 <th className="px-4 py-3 font-semibold">Categoria</th>
-                <th className="px-4 py-3 font-semibold">Contato</th>
+                <th className="px-4 py-3 font-semibold">Contato responsável</th>
                 <th className="px-4 py-3 font-semibold">Dados bancários</th>
                 <th className="px-4 py-3 text-right font-semibold">Lançamentos</th>
                 <th className="px-4 py-3 text-right font-semibold">Pendências</th>

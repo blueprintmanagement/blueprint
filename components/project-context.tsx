@@ -61,6 +61,8 @@ type PhaseRow = {
 type UnitRow = {
   id: string;
   identification: string;
+  description: string | null;
+  sale_value: number | null;
   private_area: number | null;
   common_area: number | null;
   total_area: number | null;
@@ -173,6 +175,8 @@ function mapProject(row: ProjectRow, expenses: Expense[] = []): Project {
     units: (row.project_units ?? []).map<ProjectUnit>((unit) => ({
       id: unit.id,
       identification: unit.identification,
+      description: unit.description ?? undefined,
+      saleValue: unit.sale_value ?? undefined,
       privateArea: toNumber(unit.private_area),
       commonArea: toNumber(unit.common_area),
       totalArea: toNumber(unit.total_area),
@@ -272,6 +276,10 @@ function projectPatchToRow(patch: Partial<Project>) {
 
 function cleanPatch<T extends Record<string, unknown>>(patch: T) {
   return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+}
+
+function nullablePatch<T extends object, K extends keyof T>(patch: T, key: K) {
+  return key in patch ? patch[key] ?? null : undefined;
 }
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
@@ -529,6 +537,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           organization_id: activeOrganizationId,
           project_id: createdProject.id,
           identification: unit.identification,
+          description: unit.description ?? null,
+          sale_value: unit.saleValue ?? null,
           private_area: unit.privateArea,
           common_area: unit.commonArea,
           total_area: unit.totalArea,
@@ -587,6 +597,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
             organization_id: activeOrganizationId,
             project_id: projectId,
             identification: unit.identification,
+            description: unit.description ?? null,
+            sale_value: unit.saleValue ?? null,
             private_area: unit.privateArea,
             common_area: unit.commonArea,
             total_area: unit.totalArea,
@@ -664,7 +676,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           document: patch.document,
           category: patch.category,
           contact: patch.contact,
-          bank_info: patch.bankInfo ?? null,
+          bank_info: nullablePatch(patch, "bankInfo"),
         }),
       )
       .eq("id", supplierId)
@@ -801,9 +813,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           unit_value: patch.unitValue,
           total: patch.total,
           purchase_date: patch.purchaseDate,
-          invoice_payment_date: patch.invoicePaymentDate ?? null,
-          store_payment_date: patch.storePaymentDate ?? null,
-          invoice_number: patch.invoiceNumber ?? null,
+          invoice_payment_date: nullablePatch(patch, "invoicePaymentDate"),
+          store_payment_date: nullablePatch(patch, "storePaymentDate"),
+          invoice_number: nullablePatch(patch, "invoiceNumber"),
           payment_method: patch.paymentMethod,
           status: patch.status,
           sent_to_accountant: patch.sentToAccountant,

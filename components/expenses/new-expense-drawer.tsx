@@ -769,11 +769,11 @@ export function NewExpenseDrawer({
                           placeholder="Opcional"
                         />
                       </FieldLabel>
-                      <FieldLabel label="Contato">
+                      <FieldLabel label="Contato responsável">
                         <Input
                           value={newSupplierContact}
                           onChange={(event) => setNewSupplierContact(event.target.value)}
-                          placeholder="WhatsApp ou email"
+                          placeholder="Ex: João - (51) 99999-0000"
                         />
                       </FieldLabel>
                       <FieldLabel label="Dados bancários">
@@ -845,6 +845,7 @@ export function NewExpenseDrawer({
                         <option>Boleto</option>
                         <option>Cartão</option>
                         <option>A Prazo</option>
+                        <option>Espécie</option>
                       </Select>
                     </FieldLabel>
                     <FieldLabel label="Status">

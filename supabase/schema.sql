@@ -20,7 +20,7 @@ end $$;
 
 do $$
 begin
-  create type public.payment_method as enum ('PIX', 'Boleto', 'Cartão', 'A Prazo');
+  create type public.payment_method as enum ('PIX', 'Boleto', 'Cartão', 'A Prazo', 'Espécie');
 exception
   when duplicate_object then null;
 end $$;
@@ -127,6 +127,8 @@ create table if not exists public.project_units (
   organization_id uuid not null references public.organizations(id) on delete cascade,
   project_id uuid not null references public.projects(id) on delete cascade,
   identification text not null check (char_length(trim(identification)) >= 1),
+  description text,
+  sale_value numeric(14,2) check (sale_value is null or sale_value >= 0),
   private_area numeric(12,2) not null default 0 check (private_area >= 0),
   common_area numeric(12,2) not null default 0 check (common_area >= 0),
   total_area numeric(12,2) not null default 0 check (total_area >= 0),

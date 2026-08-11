@@ -57,6 +57,10 @@ function mapPaymentMethod(code: string): PaymentMethod {
     return "PIX";
   }
 
+  if (normalized === "01") {
+    return "Espécie";
+  }
+
   return "A Prazo";
 }
 

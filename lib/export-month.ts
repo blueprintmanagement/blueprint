@@ -271,10 +271,12 @@ function createSheetXml(rows: Cell[][], rowCount: number, colCount: number) {
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <dimension ref="A1:${lastCell}"/>
   <sheetViews><sheetView workbookViewId="0"><pane ySplit="10" topLeftCell="A11" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+  <sheetFormatPr defaultRowHeight="15"/>
   <cols>${cols}</cols>
   <sheetData>${rows.map(rowXml).join("")}</sheetData>
-  <mergeCells count="3">${merges}</mergeCells>
   <autoFilter ref="A10:T${10 + rowCount}"/>
+  <mergeCells count="3">${merges}</mergeCells>
+  <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
 </worksheet>`;
 }
 
@@ -342,9 +344,9 @@ function workbookFiles(sheetXml: string, title: string) {
       content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <numFmts count="2"><numFmt numFmtId="164" formatCode="&quot;R$&quot; #,##0.00"/><numFmt numFmtId="165" formatCode="dd/mm/yyyy"/></numFmts>
-  <fonts count="6"><font><color rgb="253027"/></font><font><b/><sz val="18"/><color rgb="FFFFFF"/></font><font><b/><sz val="12"/><color rgb="FFFFFF"/></font><font><b/><color rgb="253027"/></font><font><b/><color rgb="FFFFFF"/></font><font><b/><color rgb="1E4037"/></font></fonts>
-  <fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="253027"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="F7F5EF"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="2F5D50"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF0D8"/></patternFill></fill></fills>
-  <borders count="3"><border/><border><left style="thin"><color rgb="D7DED2"/></left><right style="thin"><color rgb="D7DED2"/></right><top style="thin"><color rgb="D7DED2"/></top><bottom style="thin"><color rgb="D7DED2"/></bottom></border><border><bottom style="thin"><color rgb="D7DED2"/></bottom></border></borders>
+  <fonts count="6"><font><sz val="11"/><color rgb="FF253027"/><name val="Calibri"/></font><font><b/><sz val="18"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF253027"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF1E4037"/><name val="Calibri"/></font></fonts>
+  <fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF253027"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF7F5EF"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2F5D50"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF0D8"/><bgColor indexed="64"/></patternFill></fill></fills>
+  <borders count="3"><border/><border><left style="thin"><color rgb="FFD7DED2"/></left><right style="thin"><color rgb="FFD7DED2"/></right><top style="thin"><color rgb="FFD7DED2"/></top><bottom style="thin"><color rgb="FFD7DED2"/></bottom><diagonal/></border><border><left/><right/><top/><bottom style="thin"><color rgb="FFD7DED2"/></bottom><diagonal/></border></borders>
   <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
   <cellXfs count="11">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>

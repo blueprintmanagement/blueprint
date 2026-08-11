@@ -62,6 +62,8 @@ type ProjectForm = {
 type ProjectUnitForm = {
   key: string;
   identification: string;
+  description: string;
+  saleValue: string;
   privateArea: string;
   commonArea: string;
   totalArea: string;
@@ -90,6 +92,8 @@ const emptyProjectForm: ProjectForm = {
     {
       key: "unit-1",
       identification: "Unidade 1",
+      description: "",
+      saleValue: "",
       privateArea: "",
       commonArea: "",
       totalArea: "",
@@ -200,6 +204,8 @@ function createUnitRow(index: number): ProjectUnitForm {
   return {
     key: `unit-${Date.now()}-${index}`,
     identification: `Unidade ${index + 1}`,
+    description: "",
+    saleValue: "",
     privateArea: "",
     commonArea: "",
     totalArea: "",
@@ -210,6 +216,8 @@ function toUnitForm(unit: ProjectUnit, index: number): ProjectUnitForm {
   return {
     key: unit.id || `unit-${index + 1}`,
     identification: unit.identification,
+    description: unit.description ?? "",
+    saleValue: formatOptionalNumber(unit.saleValue),
     privateArea: formatOptionalNumber(unit.privateArea),
     commonArea: formatOptionalNumber(unit.commonArea),
     totalArea: formatOptionalNumber(unit.totalArea),
@@ -223,10 +231,13 @@ function buildUnits(projectId: string, units: ProjectUnitForm[]): ProjectUnit[] 
       const privateArea = parseOptionalNumber(unit.privateArea) ?? 0;
       const commonArea = parseOptionalNumber(unit.commonArea) ?? 0;
       const totalArea = parseOptionalNumber(unit.totalArea) ?? privateArea + commonArea;
+      const saleValue = parseOptionalNumber(unit.saleValue);
 
       return {
         id: `${projectId}-unit-${index + 1}`,
         identification: unit.identification.trim(),
+        description: unit.description.trim() || undefined,
+        saleValue,
         privateArea,
         commonArea,
         totalArea,
@@ -699,13 +710,29 @@ export function ProjectSelectionPage() {
                 {form.units.map((unit, index) => (
                   <div
                     key={unit.key}
-                    className="grid gap-3 rounded-md border border-blueprint-line bg-blueprint-surface/70 p-3 md:grid-cols-[1fr_150px_150px_150px]"
+                    className="grid gap-3 rounded-md border border-blueprint-line bg-blueprint-surface/70 p-3 md:grid-cols-[1fr_1.2fr_150px] xl:grid-cols-[1fr_1.2fr_150px_130px_130px_130px]"
                   >
                     <FieldLabel label="Identificação">
                       <Input
                         value={unit.identification}
                         onChange={(event) => updateUnit(index, { identification: event.target.value })}
                         placeholder={`Unidade ${index + 1}`}
+                      />
+                    </FieldLabel>
+                    <FieldLabel label="Descrição">
+                      <Input
+                        value={unit.description}
+                        onChange={(event) => updateUnit(index, { description: event.target.value })}
+                        placeholder="Ex: sobrado frontal"
+                      />
+                    </FieldLabel>
+                    <FieldLabel label="Valor">
+                      <Input
+                        inputMode="decimal"
+                        type="text"
+                        value={unit.saleValue}
+                        onChange={(event) => updateUnit(index, { saleValue: event.target.value })}
+                        placeholder="R$"
                       />
                     </FieldLabel>
                     <FieldLabel label="Área privativa">
@@ -1010,6 +1037,25 @@ export function ProjectSelectionPage() {
               <p className="mt-3 text-sm text-blueprint-muted">
                 {hasBudget ? `${formatCurrency(spent)} de ${formatCurrency(project.budget)}` : `${formatCurrency(spent)} registrados`}
               </p>
+
+              {project.units?.length ? (
+                <div className="mt-4 space-y-2 rounded-md border border-blueprint-line bg-white/70 p-3">
+                  {project.units.slice(0, 2).map((unit) => (
+                    <div key={unit.id} className="flex items-start justify-between gap-3 text-xs">
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-blueprint-ink">{unit.identification}</p>
+                        <p className="truncate text-blueprint-muted">{unit.description || `${unit.totalArea} m²`}</p>
+                      </div>
+                      {unit.saleValue ? (
+                        <p className="shrink-0 font-semibold text-blueprint-ink">{formatCurrency(unit.saleValue)}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                  {project.units.length > 2 ? (
+                    <p className="text-xs text-blueprint-muted">+ {project.units.length - 2} unidades cadastradas</p>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                 <Button
