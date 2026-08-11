@@ -36,7 +36,7 @@ function formatDate(date: string) {
 
 export function ExpensesPage() {
   const { activeOrganizationId } = useAuth();
-  const { activeProject, addExpense, deleteExpense, expenses, isCloudMode, projectExpenses, suppliers, updateExpense } = useProject();
+  const { activeProject, addExpense, deleteExpense, isCloudMode, projectExpenses, suppliers, updateExpense } = useProject();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
@@ -134,31 +134,39 @@ export function ExpensesPage() {
   async function handleExportMonth() {
     const { exportCompleteWorkbook, exportMonthlyWorkbook } = await import("@/lib/export-month");
 
-    if (monthFilter === "all") {
-      exportCompleteWorkbook({
-        expenses,
+    try {
+      if (monthFilter === "all") {
+        exportCompleteWorkbook({
+          expenses: projectExpenses,
+          project: activeProject,
+          suppliers,
+        });
+        return;
+      }
+
+      exportMonthlyWorkbook({
+        expenses: projectExpenses,
+        month: monthFilter,
         project: activeProject,
         suppliers,
       });
-      return;
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Não foi possível exportar a planilha.");
     }
-
-    exportMonthlyWorkbook({
-      expenses,
-      month: monthFilter,
-      project: activeProject,
-      suppliers,
-    });
   }
 
   async function handleExportAllMonths() {
     const { exportCompleteWorkbook } = await import("@/lib/export-month");
 
-    exportCompleteWorkbook({
-      expenses,
-      project: activeProject,
-      suppliers,
-    });
+    try {
+      exportCompleteWorkbook({
+        expenses: projectExpenses,
+        project: activeProject,
+        suppliers,
+      });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Não foi possível exportar a planilha.");
+    }
   }
 
   function openCreateExpense() {

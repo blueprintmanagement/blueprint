@@ -203,8 +203,11 @@ function downloadFile(fileName: string, bytes: Uint8Array) {
   link.download = fileName;
   document.body.appendChild(link);
   link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 function buildCompleteRows({
@@ -381,6 +384,11 @@ function exportDossierWorkbook({
   const filteredExpenses = expenses
     .filter((expense) => expense.projectId === project.id)
     .sort((a, b) => a.purchaseDate.localeCompare(b.purchaseDate));
+
+  if (filteredExpenses.length === 0) {
+    throw new Error("Nenhum lançamento encontrado para exportar neste período.");
+  }
+
   const paid = sum(filteredExpenses.filter((expense) => expense.status === "Pago").map((expense) => expense.total));
   const pending = sum(
     filteredExpenses.filter((expense) => expense.status === "Pendente").map((expense) => expense.total),

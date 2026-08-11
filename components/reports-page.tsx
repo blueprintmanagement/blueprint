@@ -15,7 +15,7 @@ import { uploadAttachment } from "@/lib/services/attachment-service";
 
 export function ReportsPage() {
   const { activeOrganizationId } = useAuth();
-  const { activeProject, expenses, isCloudMode, projectExpenses, suppliers, updateExpense } = useProject();
+  const { activeProject, isCloudMode, projectExpenses, suppliers, updateExpense } = useProject();
   const availableMonths = useMemo(
     () => getAvailableMonths(projectExpenses.map((expense) => expense.purchaseDate)),
     [projectExpenses],
@@ -40,22 +40,30 @@ export function ReportsPage() {
   async function handleExportMonth() {
     const { exportMonthlyWorkbook } = await import("@/lib/export-month");
 
-    exportMonthlyWorkbook({
-      expenses,
-      month,
-      project: activeProject,
-      suppliers,
-    });
+    try {
+      exportMonthlyWorkbook({
+        expenses: projectExpenses,
+        month,
+        project: activeProject,
+        suppliers,
+      });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Não foi possível exportar a planilha.");
+    }
   }
 
   async function handleExportAllMonths() {
     const { exportCompleteWorkbook } = await import("@/lib/export-month");
 
-    exportCompleteWorkbook({
-      expenses,
-      project: activeProject,
-      suppliers,
-    });
+    try {
+      exportCompleteWorkbook({
+        expenses: projectExpenses,
+        project: activeProject,
+        suppliers,
+      });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Não foi possível exportar a planilha.");
+    }
   }
 
   async function attachExpenseFile(expense: Expense, file: File) {
